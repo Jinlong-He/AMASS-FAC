@@ -1,0 +1,328 @@
+\documentclass[acmsmall,manuscript,screen,review]{acmart}
+
+%%
+%% \BibTeX command to typeset BibTeX logo in the docs
+\AtBeginDocument{%
+  \providecommand\BibTeX{{%
+    Bib\TeX}}}
+
+%% Rights management information.  This information is sent to you
+%% when you complete the rights form.  These commands have SAMPLE
+%% values in them; it is your responsibility as an author to replace
+%% the commands and values with those provided to you when you
+%% complete the rights form.
+\setcopyright{acmcopyright}
+\copyrightyear{2022}
+\acmYear{2022}
+\acmDOI{XXXXXXX.XXXXXXX}
+
+
+%%
+%% These commands are for a JOURNAL article.
+\acmJournal{FAC}
+\acmVolume{1}
+\acmNumber{1}
+\acmArticle{1}
+\acmMonth{1}
+
+%%
+%% Submission ID.
+%% Use this when submitting an article to a sponsored event. You'll
+%% receive a unique submission ID from the organizers
+%% of the event, and this ID should be used as the parameter to this command.
+%%\acmSubmissionID{123-A56-BU3}
+
+%%
+%% For managing citations, it is recommended to use bibliography
+%% files in BibTeX format.
+%%
+%% You can then either use BibTeX with the ACM-Reference-Format style,
+%% or BibLaTeX with the acmnumeric or acmauthoryear sytles, that include
+%% support for advanced citation of software artefact from the
+%% biblatex-software package, also separately available on CTAN.
+%%
+%% Look at the sample-*-biblatex.tex files for templates showcasing
+%% the biblatex styles.
+%%
+
+%%
+%% The majority of ACM publications use numbered citations and
+%% references.  The command \citestyle{authoryear} switches to the
+%% "author year" style.
+%%
+%% If you are preparing content for an event
+%% sponsored by ACM SIGGRAPH, you must use the "author year" style of
+%% citations and references.
+%% Uncommenting
+%% the next command will enable that style.
+%%\citestyle{acmauthoryear}
+
+\newtheorem{definition}{Definition}
+\newtheorem{remark}{Remark}
+
+\usepackage{graphicx}
+\usepackage{subfigure}
+\usepackage{color}
+\usepackage{url}
+%\usepackage{algorithm}  
+%\usepackage{algorithmic} 
+\usepackage{multirow}
+\usepackage{placeins}
+
+\usepackage{amsfonts}
+\usepackage{mathrsfs}
+\usepackage{amsmath}
+\usepackage[linesnumbered,ruled,noend]{algorithm2e}
+\usepackage{graphicx}
+\usepackage{multirow}
+\usepackage{color}
+\usepackage{url}
+\usepackage{enumitem}
+\usepackage{tcolorbox}
+\usepackage{tikz}
+\usepackage{array}
+\usepackage{listings}
+\usepackage{float}
+% \usepackage[dvipsnames]{xcolor}
+%\usepackage{subcaption}
+%\renewcommand{\lstlistingname}{Figure}
+
+\lstset{
+    language=Java, 
+    basicstyle=\ttfamily\small, 
+%   breaklines=true, 
+    morekeywords={final, true, null, private, false, ArrayList}, keywordstyle=\color{blue!60!black},
+    morekeywords=[2]{void, Task, ActivityRecord, NeededUriGrants, boolean, int, TaskFragment, ActivityOptions, IVoiceInteractionSession, IVoiceInteractor, BalCode, Fragment}, keywordstyle=[2]\color{red!60!black},
+    morekeywords=[3]{computeTargetTask, recycleTask, startActivityInner, getOrCreateRootTask, complyActivityFlags, executeOps, executePopOps, expandOps, getReusableTask, setNewTask, addOrReparentStartingActivity}, keywordstyle=[3]\color{darkgray},
+    commentstyle=\itshape\color{teal}, 
+    stringstyle=\bfseries\color{teal}, 
+    columns=flexible,
+    frame=single, 
+    framesep=0.1em,
+    xrightmargin=1pt,
+    lineskip=-0.5ex
+}
+
+%%%%%%% increase the nesting depth
+\usepackage{enumitem}
+\setlistdepth{9}
+
+\setlist[itemize,1]{label=$\bullet$}
+\setlist[itemize,2]{label=$-$}
+\setlist[itemize,3]{label=$\ast$}
+\setlist[itemize,4]{label=$\cdot$}
+\setlist[itemize,5]{label=$\diamond$}
+\setlist[itemize,6]{label=$\circ$}
+\setlist[itemize,7]{label=$\star$}
+\setlist[itemize,8]{label=$\triangleright$}
+\setlist[itemize,9]{label=$\square$}
+
+\renewlist{itemize}{itemize}{9}
+%%%%%%% increase the nesting depth
+
+
+\definecolor{highlightcolor}{rgb}{0.9,0.9,0.9}
+
+% correct bad hyphenation here
+\hyphenation{op-tical net-works semi-conduc-tor}
+\input{macro.tex}
+
+\newcommand\shortlong[2]{#2}
+%\newcommand\shortlong[2]{#1}
+
+\newif\ifdraft\drafttrue
+%\newif\ifdraft\draftfalse
+\ifdraft
+\newcommand{\jinlong}[1]{\color{red} {JL: #1 :LJ} \color{black}}
+\newcommand{\zhilin}[1]{\color{blue} {ZL: #1 :LZ} \color{black}}
+\newcommand{\tl}[1]{\color{magenta} {TL: #1 :LT} \color{black}}
+% \newcommand{\revision}[1]{\color{red} {JL: #1 :LJ} \color{black}}
+\newcommand{\revision}[1]{\textcolor{red}{#1}}
+\else
+\newcommand{\jinlong}[1]{}
+\newcommand{\zhilin}[1]{}
+\newcommand{\tl}[1]{}
+% \newcommand{\revision}[1]{}
+\fi
+
+\newcommand{\tool}{{\textsf TaskDroid}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%
+%% end of the preamble, start of the body of the document source.
+\begin{document}
+
+
+%%
+%% The "title" command has an optional parameter,
+%% allowing the author to define a "short title" to be used in page headers.
+\title{Formalization of Android Activity-Fragment Multitasking Mechanism and Static Analysis of Mobile Apps}
+
+%%
+%% The "author" command and its associated commands are used to define
+%% the authors and their affiliations.
+%% Of note is the shared affiliation of the first two authors, and the
+%% "authornote" and "authornotemark" commands
+%% used to denote shared contribution to the research.
+
+\author{Jinlong He}
+\affiliation{%
+  \institution{State Key Laboratory of Computer Science, Institute of Software, Chinese Academy of Sciences}
+  \streetaddress{No. 4 South 4th Street, Zhongguancun, Haidian District}
+  \city{Beijing}
+  \country{China}}
+\affiliation{%
+  \institution{School of Computer Science and Technology, University of Chinese Academy of Sciences}
+  \streetaddress{No.19(A) Yuquan Road, Shijingshan District}
+  \city{Beijing}
+  \country{China}}  
+\email{hejl@ios.ac.cn}
+
+\author{Zhilin Wu}
+\affiliation{%
+  \institution{State Key Laboratory of Computer Science, Institute of Software, Chinese Academy of Sciences}
+  \streetaddress{No. 4 South 4th Street, Zhongguancun, Haidian District}
+  \city{Beijing}
+  \country{China}}
+\affiliation{%
+  \institution{School of Computer Science and Technology, University of Chinese Academy of Sciences}
+  \streetaddress{No.19(A) Yuquan Road, Shijingshan District}
+  \city{Beijing}
+  \country{China}}  
+
+\author{Taolue Chen}
+\affiliation{%
+ \institution{School of Computing and Mathematical Sciences, Birkbeck, University of London}
+ \streetaddress{Malet Street, Bloomsbury}
+ \city{London}
+ \country{UK}}
+
+%%
+%% By default, the full list of authors will be used in the page
+%% headers. Often, this list is too long, and will overlap
+%% other information printed in the page headers. This command allows
+%% the author to define a more concise list
+%% of authors' names for this purpose.
+\renewcommand{\shortauthors}{He et al.}
+
+%%
+%% The abstract is a short summary of the work to be presented in the
+%% article.
+\begin{abstract}
+The multitasking mechanism between activities and fragments plays a fundamental role in the Android operating system, which involves a wide range of
+features, including launch modes, intent flags, task affinities, and structured activities containing fragments. All of them
+are being widely used in Android apps, both open-source and commercial ones. In this paper, we present a formal
+semantics of the Android multitasking mechanism  between activities and fragments, which accommodates all the important features and gives insofar
+the most comprehensive and accurate formalization. In particular,
+our semantics is formulated based on multi-stack systems, and
+fully captures the behavior of task stacks and activity stacks
+regarding fragments. Based on the semantics, we provide
+new static analysis algorithms, which are both multi-stack-aware and 
+fragment-sensitive, thus achieve more precise static analysis for Android apps.
+We validate our approach by extensive experiments on both
+open-source and commercial Android apps. The results highlight
+the benefits of the considering the semantics of the
+multitasking mechanism between activities and fragments in static analysis, and
+confirm the efficacy of our approach.
+\end{abstract}
+
+%%
+%% The code below is generated by the tool at http://dl.acm.org/ccs.cfm.
+%% Please copy and paste the code instead of the example below.
+%%
+\begin{CCSXML}
+<ccs2012>
+<concept>
+<concept_id>10003752.10010124.10010131.10010134</concept_id>
+<concept_desc>Theory of computation~Operational semantics</concept_desc>
+<concept_significance>500</concept_significance>
+</concept>
+<concept>
+<concept_id>10011007.10011074.10011099.10011692</concept_id>
+<concept_desc>Software and its engineering~Formal software verification</concept_desc>
+<concept_significance>500</concept_significance>
+</concept>
+</ccs2012>
+\end{CCSXML}
+
+\ccsdesc[500]{Theory of computation~Operational semantics}
+\ccsdesc[500]{Software and its engineering~Formal software verification}
+
+%%
+%% Keywords. The author(s) should pick words that accurately describe
+%% the work being presented. Separate the keywords with commas.
+\keywords{Android multitasking mechanism, activities and fragments, formal semantics, stack unboundedness, static analysis}
+
+\received{20 February 2007}
+\received[revised]{12 March 2009}
+\received[accepted]{5 June 2009}
+
+%%
+%% This command processes the author and affiliation and title
+%% information and builds the first part of the formatted document.
+\maketitle
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Introduction}\label{sec:introduction}
+\input{intro.tex}
+
+%\section{Related Work} \label{sec:related}
+%\input{related.tex}
+
+\section{Android Multitasking Mechanism Between Activities and Fragments} \label{sec:amm}
+\input{amm.tex}
+
+\section{Android MultiTasking Stack Systems} \label{sec:amass}
+\input{amass_new.tex}
+
+\section{Generating {\AMASS} models from APK files}\label{sec:apk2amass}
+\input{apk2amass.tex}
+
+\section{Encoding {\AMASS} models into nuXmv}\label{sec:amass2fsm}
+\input{amass2fsm.tex}
+
+\section{Validation of the formal semantics} \label{sec:validation}
+\input{validation_new.tex}
+
+\section{Static analysis of {\AMASS} models} \label{sec:static}
+\input{static.tex}
+
+\section{Implementation and Evaluation of the Static Analysis Algorithms}  \label{sec:eva}
+\input{evaluation.tex}
+
+
+\section{Conclusion} \label{sec:conc}
+In this paper, we have formalized the semantics of the Android multitasking mechanism by a new model {\AMASS}, which have been validated against the actual behaviors of Android systems. Based on the semantics, we provide new static analysis algorithms for detecting potential task unboundedness and fragment container unboundedness vulnerabilities. We have implemented a static analysis tool TaskDroid. The experiments show that TaskDroid is able to discover the task-unboundedness and fragment-container-unboundedness vulnerabilities for many open-source and commercial Android apps, which can be exploited to produce abnormal behaviors, e.g. black screen, app crash or even device reboot. 
+
+The formal semantics of the {\AMASS} model defined in this paper is valuable for both the developers of Android apps and the researchers on the analysis and testing of Android apps. 
+\begin{itemize}
+\item the developers can read the concise and precise semantics of the {\AMASS} model, instead of the source code of the Android OS, to understand the Android activity-fragment multitasking mechanism. % in a much faster and easier way. 
+%
+\item Compared to the various models (e.g. activity transition graphs) in literature,  the {\AMASS} model provides refined modeling of the Android activity-fragment multitasking mechanism, and can be utilized to improve the accuracy of the analysis and testing of Android apps. 
+%
+\item The task unboundedness issue identified in this paper is a novel type of security threats for Android apps, contributing to %and provides a different angle for developers to understand the 
+the understanding the security aspect of Android UI design. 
+\end{itemize}
+
+%From our formal semantics of the Android multitasking mechanism, app developers can gain a clear understanding of how task affinities, launch modes, intent flags, and fragment transactions influence the behaviors of the back stack,facilitating better app development. This is particularly valuable as the official documentation is complex and challenging to comprehend. Furthermore, researchers can also utilize the AMASS model to propose more advanced static analysis algorithms for complex security issues related to the Android multitasking mechanism.
+
+For the future work, more problems in static analysis %are worth studying which 
+can %significantly 
+benefit from the formalized multi-tasking semantics. 
+Moreover, we believe that {\AMASS} is a fundamental model in Android UI research which deserves a thorough theoretical investigation.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\bibliographystyle{alpha}
+\bibliography{references}
+
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\appendix
+\input{appendix.tex}
+
+
+\end{document}
+\endinput
+%%
+%% End of file `sample-acmsmall-submission.tex'.
