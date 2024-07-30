@@ -1,0 +1,124 @@
+%!TEX root = main.tex
+
+Android, a mobile operating system developed by Google, serves over 2 billion monthly active users and occupies over $80\%$ of the share of the global mobile operating system market.\footnote{\url{https://expandedramblings.com/index.php/android-statistics/}}
+The Google Play App store, Google's official pre-installed app store on Android devices, has supplied 2 million apps since 2016.\footnote{\url{https://www.statista.com/statistics/266210/number-of-available-applications-in-the-google-play-store/}} 
+
+Multitasking mechanism between activities and fragments plays a fundamental role in the Android operating system. Mobile apps provide diverse functionalities with seamless user experience by interacting with other apps.
+For example, the Gallery app utilizes the Email app to send pictures rather than implements its own email
+functionality \cite{LHR17}. These features require the support of frequent switch between apps. Moreover, Android provides a ``back" button by which users can easily switch between apps. 
+%While users may think that a single app manages pictures and sends emails, the actual implementation consists of two independent apps using inter-app communication.
+
+To facilitate smooth app switching and history recalling, Android introduces a last-in-first-out data structure, generally referred to as \emph{back stack}, to store users’ histories.
+Technically speaking, the back stack exhibits a three-tier nested structure. At the highest layer there is a stack of tasks where each task can be considered as a stack of activities (the middle layer), and each activity may contain fragment stacks (the lowest layer). In other words, the back stack exhibits a hierarchy of task stack, activity stack and fragment stack. From the functionality perspective, a task %, as a logical notion, 
+is a collection of activities that users interact with when performing a certain job (e.g., view email); an activity is a type of app components, which provides a graphical user interface (GUI) on screen and serves the entry point of the interaction with users. To facilitate GUI reuse, an activity may be further divided into fragments. 
+A fragment defines and manages its own layout, has its own lifecycle, and can handle its own input events. It cannot live on its own, i.e., must be hosted by an activity. 
+%A fragment represents reusable portions of android app's user interface in the activity.
+
+Activities are a central concept in the Android multitasking mechanism. In particular, 
+the evolution of %the contents of 
+the back stack depends on various attributes of activities, including launch modes and task affinities, as well as the intent flags when starting activities. 
+Moreover, the updates of the fragment containers in activities are controlled by fragment transactions (cf.\ Section~\ref{sec:amm} for more details).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% relocate to related work %%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%In light of its central role in %testing and 
+%analyzing Android apps, the multitasking mechanism has been considered in literature. To the best of our knowledge, this line of work was initiated in \cite{AN13}, where the concept of activity transition graphs (ATG) was proposed. ATGs are directed graphs where nodes are activities and edges describe the relationships that an activity can start the other. ATGs can be used for generating traces in GUI testing. An extension of ATGs, i.e., window transition graphs (WTGs) were proposed in \cite{YZWWYR15}. In WTGs, windows are assumed to be stored in one stack; nodes are windows that include not only activities, but also menus and dialogs; transitions represent a sequence of push/pop operations associated with sequences of callbacks. 
+%ATGs were also extended in \cite{YWYZ17}, giving rise to the LATTE model, a finite-state machine model which stores the activities in a bounded-height stack as well as some state information transferred across activities. Moreover, in \cite{ZSX18}, activities were assumed to be stored into a stack and its contents were used as contexts for GUI testing and pointer analysis. In \cite{LWX18}, a tool called TDroid was developed to utilize the syntactic pattens on the launch modes, intent flags, and task affinities to detect the app switching attacks.
+% 
+%
+%All of the above work did not consider fragments which were addressed in \cite{CHGD18}, where activity fragment transition graphs (AFTG) were proposed and used for GUI testing. %AFTGs extend ATGs by taking fragments into consideration.
+%	%
+%Furthermore, in \cite{LHR17,ChenHSWWY18,HCWWY19}, formal semantics for Android multitasking mechanism were proposed and used for the static analysis of Android apps.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% relocate to related work %%%%%%%%%%%%%%%%%%%%%%%%%%%
+ 
+
+%, as a result of its importance in Android operating system. 
+%We briefly survey the state-of-the-art in the sequel (which, nonetheless, does not aim to be complete.).
+%
+%\begin{itemize}
+%\item This line of work was initialized In \cite{AN13}, where the concept of activity transition graphs (ATG) was proposed. ATGs are directed graphs where nodes are activities and edges describe the relationships that an activity can start the other. ATGs can be used for generating traces in GUI testing.
+%%
+%\item Then in \cite{YZWWYR15}, window transition graphs (WTGs) were proposed as an extension of ATGs. In WTGs, the windows are assumed to be stored in one stack and the nodes are windows that include not only activities, but also menus and dialogs, moreover, the transitions represent a sequence of push/pop operations and are associated with the sequences of callbacks. 
+%%
+%\item Later on, in \cite{YWYZ17}, the LATTE model was proposed, which is essentially a finite-state machine model that extends ATGs in the following sense: It stores the activities into a bounded-height stack as well some state information transferred across activities. 
+%%
+%\item Moreover, in \cite{ZSX18}, activities were assumed to be stored into a stack and its contents were used as contexts for GUI testing and pointer analysis.
+%%
+%\item In \cite{LWX18}, a tool called TDroid was proposed to detect the app switching attacks based on a syntactic patten approach.
+%%%
+%\item In \cite{CHGD18}, a concept of activity fragment transition graphs (AFTG) was proposed and used for GUI testing. AFTGs extend ATGs by taking fragments into consideration.
+%%
+%\item Furthermore, in \cite{LHR17,ChenHSWWY18,HCWWY19}, formal semantics for Android multitasking mechanism were proposed and used for the static analysis of Android apps.
+%\end{itemize} 
+% TaskDroid multi-stack semantics, static analysis, no fragments, no testing
+%
+
+%\paragraph*{Motivation.} 
+%Although there have been aforementioned large body of work on back-stack-aware testing and analysis of Android apps,
+%Despite 
+In light of its central role in %testing and 
+analyzing Android apps, the multitasking mechanism between activities and fragments has been considered in literature.
+First, there have been decent work towards its formalization and we refer to readers to Section~\ref{sec:related} for some introduction. % of multitasking the progress, it is fair to say that 
+%the understanding of Android multitasking mechanism and its application in Android app analysis and testing are still unsatisfactory. 
+%in its infancy. 
+%For the former, %there have not existed any 
+However, the existing formal semantics is far from complete. A primary drawback is that the activities are treated as an atomic object therein, while the internal structures (e.g., fragments) were abstracted away. 
+%This was indeed the case in the literature~\cite{LHR17,ChenHSWWY18,HCWWY19}. 
+The understanding of semantics may play a significant role in carrying out semantics-aware analysis of the mobile app, which can capture more features of the Android platform and thus is more precise. In contrast, 
+the state-of-the-art analysis largely applied a syntactic approach. The underlying stack semantics of the multitasking mechanism between activities and fragments is either ignored completely (\cite{AN13,LWX18,CHGD18}) or considered in a very much restricted form (e.g., single stack \cite{YZWWYR15}), or otherwise important features (e.g., task affinities or fragments) are skipped \cite{YZWWYR15,YWYZ17, ZSX18}.  
+%\begin{itemize}
+%\item in \cite{AN13}, ATGs were used syntactically and no semantics was given, 
+%%
+%\item in \cite{YZWWYR15}, WTGs adopted the single-stack semantics, but did not consider launch modes, intent flags, or fragments, 
+%%
+%\item in \cite{YWYZ17}, the LATTE model only considered launch modes and defined the single-stack semantics, ignored intent flags, task affinities, or fragments, 
+%%
+%\item in \cite{ZSX18},  only launch modes were considered, but intent flags, task affinities, and fragments were ignored, 
+%%
+%\item in \cite{LWX18}: a pattern-based approach was used and semantics were ignored, 
+%%
+%\item in \cite{CHGD18}, a syntactic approach was used and semantics were ignored, although both activities and fragments were both covered,
+%%
+%\item in \cite{LHR17,ChenHSWWY18,HCWWY19}, the multi-stack semantics were defined, but fragments were ignored, moreover, the semantics were not used for GUI testing.
+%%
+%\end{itemize}
+%
+
+The status quo is clearly unsatisfying. 
+Indeed, all the multitasking features, including task affinities and fragments, are widely used in Android apps, especially the commercial ones. A small-scale survey on the 3,000 most downloaded commercial Android apps in Google play shows that almost all apps use launch modes and intent flags, about $10\%$ of the apps use non-default task affinities, and  about $50\%$ of the apps involve fragments. 
+We address these shortcomings in the current paper. %This motivates the following research question: 
+%
+%\hl{
+%Can a formal semantics of Android multitasking mechanism be defined to cover all important features (in particular, task affinities and fragments) and used to enhance the testing coverage and analysis precision of Android apps ?
+%}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\medskip
+\noindent\emph{Main contributions.} In this paper, we make the following contributions. %aiming at resolving the research question, we make the following contributions: 
+\begin{itemize}[leftmargin=*]
+\item We introduce a new model, Android multitasking stack machine (\AMASS), to define the formal semantics of the multitasking mechanism between activities and fragments. {\AMASS} covers all the important multitasking features (e.g., task affinities and fragments) and provides, to best our knowledge, insofar the most comprehensive formal account of the Android multitasking mechanism between activities and fragments. Moreover, We validate the formal semantics of {\AMASS} models against the actual behavior of  Android apps by designing a special-purpose app and doing large-scale experiments with the app. 
+%
+\item We harness the semantics to design novel algorithms for static analysis of the abnormal behaviors of task unboundedness and fragment-container unboundedness. %, providing a higher testing coverage and analysis precision. 
+
+\item We implement the algorithms into a static analysis tool called TaskDroid and experiment on a corpus of open source and commercial Android apps.  
+%\tl{impressive figures?}. 
+The results show that TaskDroid can detect the task/fragment-container unboundedness problems for open source and commercial Android apps and the unboundedness problems entail abnormal behaviors of Android apps, including black screen, app crash, and device reboot, owing to a fine-grained semantic modeling of Android multitasking mechanism between activities and fragments.  %the analysis precision. 
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%Compared to \cite{HCWWY19}, this paper adds fragments, extends the analysis accordingly, moreover, the experiments are  more extensive. 
+
+\subsection{Related work}\label{sec:related}
+\input{related.tex}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\medskip
+ 
+\noindent\emph{Structure.} The rest of the paper is organized as follows. 
+Section~\ref{sec:amm} gives an informal introduction to Android multitasking mechanism between activities and fragments. Section~\ref{sec:amass} introduces the model {\AMASS} and formalization of the multitasking mechanism  between activities and fragments. Section~\ref{sec:apk2amass} shows how to extract {\AMASS} models out of Android APK files. Section~\ref{sec:amass2fsm} describes how to encode the semantics of the {\AMASS} models into the reachability problem of finite state machines  that can be tackled by the symbolic model checker nuXmv, if the stack heights are assumed to be bounded by a constant. Section~\ref{sec:validation} is devoted to the validation of the formal semantics of {\AMASS} models against the actual behaviors of Android apps. 
+Section~\ref{sec:static} presents the static analysis algorithms for the task/fragment-container unboundedness problems. 
+Section~\ref{sec:eva} describes the implementation of the static analysis tool, TaskDroid, the benchmarks, and the experiments for the evaluation of TaskDroid. %The related work is discussed in Section~\ref{sec:related}.
+The paper is concluded in Section~\ref{sec:conc}. 
+
+A preliminary version of this paper has appeared in the proceedings of APLAS 2019 \cite{HCWWY19}. This paper extends the APLAS paper in the following four aspects: (i) Fragments, a crucial feature of Android multitasking which was ignored in \cite{HCWWY19}, is fully addressed in the current paper, including the formal semantics and static analysis. (ii) The semantics of multitasking mechanism between activities and fragments for Android 6.0-13.0 are defined in this paper, while only the semantics for Android 7.0 and 8.0 were defined in \cite{HCWWY19}. \jinlong{Moreover, the semantics defined in \cite{HCWWY19} is not accurate, it does not consider real activity and main task. They are fully considered in the current paper. (iii) The semantics of {\AMASS} are validated via auditing the source code of Android OS and testing the Android apps in this paper, while the semantics of the model defined in \cite{HCWWY19} are not validated.} (iv) The models are extracted both statically and dynamically in this paper, while only static model extraction was used in \cite{HCWWY19}. (v) The experiments are considerably more thoroughly done with, in particular, more benchmarks.
+ 

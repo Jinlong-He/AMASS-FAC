@@ -1,0 +1,515 @@
+%!TEX root = main.tex
+
+%App developers may be interested in checking whether there is a sequence of user actions which can force the height of the back stack to grow unbounded. %Such information is valuable, since if this happens, 
+%If this were the case, there would be a security risk that the app may crash if a user interacts with the app by following the sequence. The aim of this section is to detect such a vulnerability. 
+
+%Let $\Aa = (\actsig, \Delta)$ be an ASM and $\rho = ((S_1, A_1), \cdots, (S_m, A_m))$ be a configuration of $\Aa$. The \emph{height} of $\rho$ is defined as $\max \limits_{i \in [m]}|S_i|$. By convention, the height of $\varepsilon$ is defined as $0$. 
+ 
+%\subsection{Static Analysis}
+
+In this section, we consider the static analysis of {\AMASS} models.  
+%
+%\tl{I think here we would better start with vulnerabilities}
+We focus on two vulnerabilities which might occur in Android apps, i.e., \emph{task unboundedness vulnerability} and \emph{fragment-container unboundedness vulnerability}.  
+The former refers to the case that in the execution of the app, one might be in a configuration the height of which is unbounded. The latter one is similar, where the height of a fragment container of some activity of the configuration is unbounded. As we will see later, these vulnerabilities would cause abnormal behavior of apps. 
+%
+%Let $\Mm$ be an {\AMASS} model. $\Mm$ is said to be \emph{task-unbounded}, if for every $n \in \natnum$ there is a configuration $\rho$ of $\Mm$ such that $\epsilon \xrightarrow{\Mm} \rho$ and the height of $\rho$ is at least $n$. $\Mm$ is said to be \emph{fragment-containder-unbounded}, if for every $n \in \natnum$ there is a configuration $\rho$ of $\Mm$ such that $\epsilon \xrightarrow{\Mm} \rho$ and the height of a fragment container of some activity of $\rho$ is at least $n$. 
+The stack analysis aims to detect the apps who are potentially exposed to the vulnerabilities. While the problem is generally unsolvable in theory, we appeal to sensible relaxations, as illustrated in the following two subsections. 
+%The task (resp.\ fragment-container) unboundedness problem is to decide for a given {\AMASS} model $\Mm$, whether $\Mm$ is task-unbounded (resp.\ fragment-container unbounded).
+
+
+
+%We focus on the following two problems, \emph{task unboundedness problem} and \emph{fragment-container unboundedness problem}.  
+%
+%Let $\Mm$ be an {\AMASS} model. $\Mm$ is said to be \emph{task-unbounded}, if for every $n \in \natnum$ there is a configuration $\rho$ of $\Mm$ such that $\epsilon \xrightarrow{\Mm} \rho$ and the height of $\rho$ is at least $n$. $\Mm$ is said to be \emph{fragment-containder-unbounded}, if for every $n \in \natnum$ there is a configuration $\rho$ of $\Mm$ such that $\epsilon \xrightarrow{\Mm} \rho$ and the height of a fragment container of some activity of $\rho$ is at least $n$. 
+%
+%The task (resp.\ fragment-container) unboundedness problem is to decide for a given {\AMASS} model $\Mm$, whether $\Mm$ is task-unbounded (resp.\ fragment-container unbounded). 
+
+%In the sequel, we will show how to solve the two unboundedness problems. 
+
+\subsection{Task unboundedness} \label{sec:task-unbound}
+%Formally, an AMASS $\Mm$ is said to be \emph{task-unbounded}, if for every $n \in \natnum$ there is a configuration $\rho$ of $\Mm$ such that $\epsilon \xrightarrow{\Mm} \rho$ and the height of $\rho$ is at least $n$. 
+
+%While the 
+To detect the task unboundedness vulnerability, %problem turns out to be difficult, 
+we consider %a relaxation of task unboundedness, i.e., 
+\emph{$k$-task unbounded} where $k$ is a given natural number.
+%
+An AMASS $\Mm$ is \emph{$k$-task unbounded} if, for every $n \in \natnum$, there are a configuration $\rho$ of $\Mm$ and a task in $\rho$ such that $\epsilon \xrightarrow{\Mm} \rho$, the height of the task is at least $n$, and the path from $\epsilon$ to $\rho$ %. $\Mm$ is task-unbounded and the unboundedness is caused by 
+%
+%a particular task such that the height of the task is unbounded during the evolution which  %ossibly with the cooperation of 
+involves the interplay with at most $k$ other tasks.  
+
+%
+%if for every $n \in \natnum$ there is a configuration $\rho$ of $\Mm$ such that $\epsilon \xrightarrow{\Mm} \rho$ and the height of $\rho$ is at least $n$.
+
+
+For instance, we assume that in $\Mm$ the following two conditions are satisfied:
+\begin{itemize}
+\item[(i)] the main activity $A_0$ satisfies $\aft(A_0) = 1$, the main task is the top task, and the top activity of the main task is $A \neq A_0$ with $\lmd(A) = \standard$ and $\aft(A) = 1$, 
+%
+\item[(ii)] $\Mm$ contains two transition rules $A \xrightarrow{\startactivity(\phi_1)} B$ and $B \xrightarrow{\startactivity(\phi_2)} A$ such that $\lmd(B) = \singletask$, $\aft(B) = 2$, $\phi_1 \models \ctkflag$, $\phi_2 \models \ntkflag \wedge \neg \ndmflag\wedge \neg \mtkflag \wedge \neg \stpflag \wedge \neg \rtfflag \wedge \neg \ctpflag \wedge \neg \ctkflag$. 
+\end{itemize}
+Then $\Mm$ is $1$-task unbounded since the number of $A$ instances in the main task can go unbounded by executing the two transition rules repeatedly, during which the main task interacts with another task where $B$ is the only activity.
+
+We hypothesize that, most task unbounded vulnerabilities %are actually $k$-task unbounded for 
+only involve a small number of tasks (normally, $k\leq 2$). 
+%As a result, as a practical solution, we can appeal to checking  $k$-task unboundedness for a small $k$. This hypothesis 
+which will be justified by experiments in Section~\ref{sec:hyp}.
+As a result, we introduce algorithms to solve the $k$-task unboundedness problem. We will start with $k = 0$ and $k = 1$, then consider the more general case $k \ge 2$.
+
+We will focus on the following typical situation: For any pair of distinct tasks, if none of their real activities has the $\singleinstance$ (SingleInstance) launch mode, then their affinities should be different. Note that the constraint in this situation is satisfied, if in all the transitions of $\Mm$, $\mtkflag$ is set to be false, namely, $\phi \models \neg \mtkflag$. This assumption is empirically justified by the fact that in 6,388 open-source F-Droid and commercial Google-play apps used for experiments (see Section~\ref{sec:eva}), only less than 3\% percent of them contain occurrences of the $\mtkflag$ flag. 
+%\zhilin{add empirical justification of this situation.}
+
+We first introduce some notations. We use $\act_{\sf real}$ to denote the set of activities in $\Mm$ that may occur as a real activity of tasks. More precisely, $\act_{\sf real}$ is  the set of activities $A \in \act$ such that one of the following conditions holds: 1) $\lmd(A) = \singleinstance$,  2) $\lmd(A) = \singletask$, 3) $\lmd(A) = \standard$ or $\singletop$, and $A$ occurs in some transition $B \xrightarrow{\alpha(\phi)} A$ such that $\lmd(B) = \singleinstance$ or  $\phi \models \ntkflag\vee\ndmflag$. 
+%Intuitively, $\act_{\sf real}$ is the set of activities that may occur as a real activity of tasks. 
+
+%%%%%%%%%%%%%
+% 
+%
+%Without loss of generality, let us assume that $|\aft(\act_{\sf real} \setminus \act_{\singleinstance})| + |\act_{\singleinstance}|$, the maximum number of tasks in the configuration of $\Aa$, is at least $k+1$. 
+%For any activity $A$, an $A$-task is a task whose real activity is $A$. 
+%
+For each activity $A \in \act_{\sf real}$ such that $\lmd(A) \neq \singleinstance$, let $\reach(\Delta, A)$ denote the least subset $\Theta\subseteq \Delta$ satisfying that %satisfying the following condition: 
+$B \xrightarrow{\alpha(\phi)} C \in \Theta$ (where $\alpha = \startactivity$ or $\finishstart$) 
+%for each transition $B \xrightarrow{\alpha(\phi)} C \in \Delta$ satisfying 
+whenever the following two constraints are satisfied: 
+\begin{itemize}
+\item $B = A$ or there exists a transition $A' \xrightarrow{\alpha'(\phi')} B \in \Theta$ (where $\alpha' = \startactivity$ or $\finishstart$),
+%
+\item $\lmd(C) \neq \singleinstance$, and if $\lmd(C) = \singletask$ or $\phi \models \ntkflag\vee\ndmflag$, then $\aft(C) = \aft(A)$.
+\end{itemize}
+Intuitively, $\reach(\Delta, A)$ comprises all the transition rules that can be applied and once applied would  retain an $A$-task as the top task. 
+%
+By abusing the notation slightly, $\reach(\Delta, A)$ also denotes the graph whose edge set is $\reach(\Delta, A)$.
+
+$\reach(\Delta, A)$ can be generalized to the case that $A \in \act_{\sf real}$ and $\lmd(A) = \singleinstance$, where $\reach(\Delta, A)$ is regarded as the graph that contains a single node $A$ without edges.
+
+
+%\paragraph{Case $k=0$.} 
+%In this case, we want to check whether the content of some task can go unbounded, \emph{without} the cooperation of the other tasks.
+%
+\subsection*{Case $k = 0$.}
+Now we will propose a procedure to check $k$-task unboundedness for $k=0$. The underpinning idea is  to search, for each $A \in \act_{\sf real}$,  %with $\lmd(A) \neq \singleinstance$, % A simple cycle $\Cc$ satisfying the above constraints is called a 
+a \emph{witness cycle}, i.e., a sequence of transitions  from $\reach(\Delta, A)$, the execution of which would force the task to grow indefinitely. %for the stack unboundedness, 
+%or \emph{su-witnessing cycle} for brevity. 
+
+%For each $A \in \act_{\sf real}$ such that $\lmd(A) \neq \singleinstance$, 
+%check whether there exists 
+Formally, a witness cycle is a simple cycle in the graph $\reach(\Delta, A)$ of the form 
+$$\Cc = A_1 \xrightarrow{\alpha_1(\phi_1)} A_2 \cdots A_{n-1} \xrightarrow{\alpha_{n-1}(\phi_{n-1})} A_n$$ 
+where $n \ge 2$ and $\alpha_i = \startactivity$ or $\finishstart$ for each $i \in [n]$ satisfying the following two constraints: 
+%\begin{description}
+%\item
+\smallskip
+
+\noindent[Non-clearing] The content of an $A$-task is \emph{not} cleared when %the transitions of $\Cc$ are executed. 
+$\Cc$ is executed. Namely, for each $i \in [n-1]$, $\phi_i \models \neg \ctpflag\wedge\neg\ndmflag$, moreover, either $\phi_i \models \neg \ctkflag$, or $\phi_i \models  \neg \ntkflag$ and $\lmd(A_{i+1}) \neq \singletask$ (intuitively, this means that $\ctkflag$ is not enabled, cf. Figure~\ref{fig-asm-depend}).
+%
+%\item 
+\smallskip
+
+\noindent [Height-increasing] The height of the task content is increasing after 
+%every transition of $\Cc$ are executed once. 
+$\Cc$ is executed. Namely, it is required that $\sum_{i \in [n-1]} weight_\Cc(\tau_i)>0$, where for each $i \in [n-1]$, $\tau_i = A_i  \xrightarrow{\alpha_i(\phi_i)} A_{i+1}$ and $weight_\Cc(\tau_i)$ specifies the modification of the height of the $A$-task by executing $\tau_i$ and
+%
+%the weight of $\tau_i$ w.r.t. $\Cc$, describes the effect of $\tau_i$ on the height of the content of the $A$-task, provided that every transition of $\Cc$ have been executed at least once before. Specifically, $weight_\Cc(\tau_i)$
+is defined as follows.
+\begin{itemize}
+\item If $\alpha_i = \startactivity$, then 
+%
+\begin{itemize}
+\item if $\phi_i \models \rtfflag$, then $weight_\Cc(\tau_i)  = 0$,  
+%
+\item if $\phi_i \models \neg \rtfflag$, $A_i = A_{i+1}$, and either $\phi_i \models \stpflag$ or $\lmd(A_{i+1}) = \singletop$, then $weight_\Cc(\tau_i)  = 0$,   
+%
+\item otherwise,  $weight_\Cc(\tau_i)  = 1$.
+\end{itemize}
+
+\item If $\alpha_i = \finishstart$, then
+\begin{itemize}
+\item if $\phi_i \models \rtfflag$, then $weight_\Cc(\tau_i)  = -1$,  
+%
+\item if $\phi_i \models \neg \rtfflag$, $A_i = A_{i+1}$, and either $\phi_i \models \stpflag$ or $\lmd(A_{i+1}) = \singletop$, then $weight_\Cc(\tau_i)  = -1$,   
+%
+\item otherwise,  $weight_\Cc(\tau_i)  = 0$.
+\end{itemize}
+\end{itemize}
+
+%\end{description}
+%A simple cycle $\Cc$ satisfying the above constraints is called a \emph{witnessing cycle} for the stack unboundedness, or \emph{su-witnessing cycle} for brevity.
+
+%Our algorithm is to to check, for any $A \in \act_{\sf real}$, whether there exists an su-witnessing cycle in $\reach(\Delta, A)$. 
+If a witness cycle exists for some $A  \in \act_{\sf real}$, the algorithm returns ``task unbounded''; otherwise, if 
+%$\Delta=\reach(\Delta, A_0)$ or 
+$\Delta$ is a directed acyclic graph, then the algorithm returns ``task bounded''; otherwise, the procedure reports ``unknown''.
+ 
+
+
+The more general cases for $k\geq 1$ are much more technical and involved. We introduction the concept of ``virtual transitions" for tasks to capture the situation that the content of a task can be indirectly modified by first jumping off the task and returning to the task later on. When this happens, the 
+procedure adds virtual transitions for each task before checking the existence of witness cycles.  
+
+ 
+\subsection*{Case $k=1$.}
+Let $A \in \act_{\sf real}$. In this case, we check whether the height of some $A$-task is unbounded, but involving another task. %with the cooperation of another task.  
+The main difficulty of this case, in a contrast to $k=0$, is that, when the system evolves, %the content of an $A$-task grows, %goes unbounded, 
+%it may happen that 
+the $A$-task may give away as the top task, i.e., the other task may become the top task, but then gives back to the $A$-task later on. Even worse, the content of the $A$-task may have be changed during the round of switch over, and there may be several rounds during which the height of the $A$-task grows.  %switches from the $A$-task to some other task, then switches back to the $A$-task again later on. During the switching, the content of the $A$-task may be modified. Moreover, this kind of top-task switchings may occur several times during the process. 
+%In the following, 
+To accommodate such a complex analysis, we will utilise a concept of \emph{virtual transitions} to summarize the changes of the content of the $A$-task for each round of top task switching. %during the top-task switchings. 
+
+%We will introduce an algorithm to solve the $1$-task unboundedness problem for the following typical situation: For any pair of distinct tasks, if none of their real activities has the $\singleinstance$ (SingleInstance) launch mode, then their affinities should be different. Note that the constraint in this situation is satisfied, if in all the transitions of $\Mm$, $\mtkflag$ is set to be false, namely, $\phi \models \neg \mtkflag$.
+
+%Before presenting the concept of virtual transitions, we introduce another notation.
+
+%Let $A, B \in \act_{\sf real}$ such that $A,B$ represent different tasks \tl{?}. 
+
+%\tl{maybe write $G_A$?}
+%Moreover, 
+
+We introduce some notations first. Let $A, B \in \act_{\sf real}$ such that $\lmd(A) \neq \singleinstance$ and $A, B$ represent different tasks, specifically, one of the following conditions holds:
+\begin{enumerate}
+\item $\lmd(A) = \lmd(B) = \singleinstance$ and $A \neq B$, 
+\item $\lmd(A) = \singleinstance$ and $\lmd(B) \neq \singleinstance$, 
+\item $\lmd(A) \neq \singleinstance$ and $\lmd(B) = \singleinstance$, 
+\item $\lmd(A) \neq \singleinstance$, $\lmd(B) \neq \singleinstance$, and $\aft(A) \neq \aft(B)$.
+\end{enumerate}
+
+
+Let $G_A=(V, E)$ be an edge-labeled graph,  where the edge labels are of the form $\alpha(\phi)$ with $\alpha \in \{\startactivity, \finishstart\}$ and $\phi \in \bool(\Ff)$. Intuitively,  
+%
+%with the intention of capturing 
+$G_A$ is used to capture the set of transitions that can be applied to update the content of an $A$-task. 
+%
+%Note that if $\lmd(A) = \singleinstance$, then $G_A$ is the graph that contains a single node $A$ without edges.
+
+%
+A \emph{task-switching transition from $G_A$ to a $B$-task} is a transition $A' \xrightarrow{\alpha'(\phi')} B' \in \Delta$ such that 
+$A' \in V$, and one of the following conditions holds,
+\begin{itemize}
+%\item $\lmd(A') = \singleinstance$, 
+%
+\item $\lmd(B') = \singleinstance$ and $B'=B$, 
+%
+\item $\lmd(B') = \singletask$, moreover, $\aft(B') = \aft(B)$ and $\lmd(B) \neq \singleinstance$, 
+%
+\item  $\lmd(B') = \standard$ or $\singletop$, and $\phi' \models \ntkflag\vee\ndmflag$,  moreover, $\aft(B') = \aft(B)$ and $\lmd(B) \neq \singleinstance$.
+\end{itemize}
+Intuitively, a task-switching transition from $G_A$ to a $B$-task means the task-switching in the situation that $A$-task and $B$-task already exist. Note that in this situation, if $\lmd(B) \neq \singleinstance$ and $\lmd(B') \neq \singleinstance$, then there does not exist a $B'$-task, since there do not exist two non-$\singleinstance$-tasks whose affinities are $\aft(B)$.
+%moreover, $\getrealtsk(B') = *$ if $B' \neq B$.
+
+%Note that if $\lmd(B') \neq \singleinstance$ and $\lmd(B) \neq \singleinstance$, then $\aft(B') = \aft(B)$ implies $\aft(B') \neq \aft(A)$ , since $A$ and $B$ represent different tasks.
+
+%Suppose additionally $\lmd(A) \neq \singleinstance$ holds. 
+%Then
+%capturing the set of transitions that can be applied to update the content of an $A$-task, 
+A transition $A' \xrightarrow{\alpha'(\phi')} A''$ is a \emph{virtual transition of $G_A$ w.r.t.\ $B$} if there is a task-switching transition $A' \xrightarrow{\alpha(\phi)} B'$ from $G_A$ to a $B$-task and a task-switching transition $B'' \xrightarrow{\alpha'(\phi')} A''$ from $\reach(\Delta, B')$ to an $A$-task. Note that the virtual transition inherits the intent-flag constraint of $B'' \xrightarrow{\alpha'(\phi')} A''$.
+%Note that $B'$, instead of $B$, is used in $\reach(\Delta, B')$.
+
+The \emph{completion of $\reach(\Delta, A)$ by the virtual transitions w.r.t. $B$},  denoted by ${\sf Comp}_B(\reach(\Delta, A))$, is defined as the graph computed by the following three-step algorithm.
+\begin{enumerate}
+	\item Let $G_0 := \reach(\Delta, A)$ and $i:=0$. 
+	%
+	\item Iterate the following procedure until $G_{i+1} = G_i$: Let $G_{i+1}$ be the graph obtained from $G_i$ by adding all the virtual transitions of $G_i$ w.r.t. $B$. Let $i:=i+1$. 
+	%
+	\item Let ${\sf Comp}_B(\reach(\Delta, A)):=G_i$.
+\end{enumerate}
+
+%-----------------------------------------------------------------------------
+%We are ready to present the procedure to solve the stack boundedness problem for the case $k = 1$. The procedure
+Finally, we present the algorithm to decide the $1$-task unboundedness of $\Mm$.
+%
+\begin{tcolorbox}[width=1.0\linewidth, title={Algorithm to decide the $1$-task unboundedness of $\Mm$}]
+Check for each $A, B \in \act_{\sf real}$ such that  $\lmd(A) \neq \singleinstance$ and $A,B$ \emph{represent different tasks}, whether there exists 
+a witness cycle %an su-witnessing cycle 
+in ${\sf Comp}_B(\reach(\Delta, A))$. \\
+%
+If %the answer is yes for any such a pair $A,B$, 
+affirmative, then the algorithm returns ``task unbounded''. 
+
+Otherwise, if 
+%$|\aft(\act_{\sf real} \setminus \act_{\singleinstance})|+|\act_{\singleinstance}| \le 2$ (in this situation, there are at most two tasks in configurations of $\Aa$) or 
+$\Delta$ is a directed acyclic graph, then the algorithm returns ``task bounded''. 
+
+Otherwise, the algorithm returns ``unknown''.
+\end{tcolorbox}
+
+%-----------------------------------------------------------------------------------
+%$k=2
+\subsection*{Case $k \ge 2$.}
+
+We first extend the concept of representing different tasks from two to multiple tasks.
+For $A \in \act_{\sf real}$ and $\mathbb{A} = \{A_1, \cdots, A_k\} \subseteq \act_{\sf real}$, we say that $A, A_1, \cdots, A_k$ represent different tasks if they are mutually distinct, in addition, for each pair of them, say $A'$ and $A''$, they represent different tasks.  
+%of the following constraints holds: 1) $\lmd(A')  = \lmd(A'') = \singleinstance$, 2) $\lmd(A') = \singleinstance$ and $\lmd(A'') \neq \singleinstance$, 3) $\lmd(A') \neq \singleinstance$ and $\lmd(A'') = \singleinstance$, 4) $\lmd(A') \neq \singleinstance$, $\lmd(A'') \neq \singleinstance$, and $\aft(A') \neq \aft(A'')$.
+
+Let $A \in \act_{\sf real}$ and $\mathbb{A} = \{A_1, \cdots, A_k\} \subseteq \act_{\sf real}$ such that $A, A_1, \cdots, A_k$ represent different tasks in the sequel.
+
+Let $G=(V, E)$ be an edge-labeled graph,  where the edge labels are of the form $\alpha(\phi)$ with $\alpha \in \{\startactivity, \finishstart\}$ and $\phi \in \bool(\Ff)$, with the intention of capturing the set of transitions that can be applied to update the content of an $A$-task. Note that if $\lmd(A) = \singleinstance$, then $G$ is the graph that contains a single node $A$ and no edges.
+A \emph{task-switching transition from $G$ to $\mathbb{A}$-tasks} is a transition $A' \xrightarrow{\alpha'(\phi')} B' \in \Delta$ such that $A' \in V$ and one of the following constraints holds,
+%
+%moreover, either $\lmd(B') = \singleinstance$ and $B' \in \mathbb{A}$, or $\lmd(B') \neq \singleinstance$ and $\aft(B') \in \aft(\mathbb{A} \setminus \act_\singleinstance)$.
+%
+\begin{itemize}
+\item $\lmd(B') = \singleinstance$ and $B' \in \mathbb{A}$, 
+%
+\item $\lmd(B') = \singletask$ and $\aft(B') \in \aft(\mathbb{A} \setminus \act_\singleinstance)$, 
+%
+\item  $\lmd(B') = \standard$ or $\singletop$, and $\phi' \models \ntkflag\vee\ndmflag$,  moreover, $\aft(B') \in \aft(\mathbb{A} \setminus \act_\singleinstance)$.
+\end{itemize}
+Intuitively, a task-switching transition from $G$ to  $\mathbb{A}$-tasks means the task-switching in the situation that $A$-task, and $A_1$-task, $\cdots$, $A_k$-task already exist. 
+%Note that in this situation, if $\lmd(B) \neq \singleinstance$ and $\lmd(B') \neq \singleinstance$, then there does not exist a $B'$-task, since there do not exist two non-$\singleinstance$-tasks whose affinities are $\aft(B)$.
+
+
+For $B' \in \act$ such that either $\lmd(B') = \singleinstance$ and $B' \in \mathbb{A}$, or $\lmd(B') \neq \singleinstance$ and $\aft(B') \in \aft(\mathbb{A} \setminus \act_\singleinstance)$,  we use $\reach_\mathbb{A}(\Delta, B')$ to denote the least set of transitions $\Theta \subseteq \Delta$ satisfying the following constraints: 
+\begin{itemize}
+\item $\reach(\Delta, B') \subseteq \Theta$, 
+%
+\item for each transition $C \xrightarrow{\alpha(\phi)} D \in \Delta$ satisfying the following two conditions, we have $C \xrightarrow{\alpha(\phi)} D \in \Theta$: 
+\begin{enumerate}
+\item $C$ is either $B'$ or the target node of some transition in $\Theta$, 
+%
+\item if $\lmd(D) = \singleinstance$, then $D \in \mathbb{A}$,  \\
+if $\lmd(D) = \singletask$, then $\aft(D) \in \aft(\mathbb{A} \setminus \act_\singleinstance)$, \\
+if $\lmd(D) = \standard$ or $\singletop$, and $\phi \models \ntkflag\vee\ndmflag$,  then $\aft(D) \in \aft(\mathbb{A} \setminus \act_\singleinstance)$.
+%$\lmd(D) \neq \singleinstance$ and $\aft(D) \in \aft(\mathbb{A} \setminus \act_\singleinstance)$.
+\end{enumerate}
+\end{itemize}
+Intuitively, $\reach_\mathbb{A}(\Delta, B')$ is the set of transitions that are reachable from $B'$ that can be used to update the contents of the tasks whose real activities are from $ \mathbb{A}$.
+
+Suppose additionally $\lmd(A) \neq \singleinstance$ holds. For a graph $G=(V, E)$ capturing the set of transitions that can be applied to update the content of an $A$-task,  a \emph{virtual transition of $G$ w.r.t. $\mathbb{A}$} is some $A' \xrightarrow{\alpha'(\phi')} A''$ such that there is a task-switching transition $A' \xrightarrow{\alpha(\phi)} B'$ from $G$ to $\mathbb{A}$-tasks and a task-switching transition $B'' \xrightarrow{\alpha'(\phi')} A''$ from $\reach_\mathbb{A}(\Delta, B')$ to an $A$-task.
+We define the \emph{completion of $\reach(\Delta, A)$ by the virtual transitions w.r.t. $\mathbb{A}$},  denoted by ${\sf Comp}_\mathbb{A}(\reach(\Delta, A))$, as the graph computed by the following three-step algorithm.
+\begin{enumerate}
+\item Let $G_0 := \reach(\Delta, A)$ and $i:=0$. 
+%
+\item Iterate the following procedure until $G_{i+1} = G_i$: Let $G_{i+1}$ be the graph obtained from $G_i$ by adding all the virtual transitions of $G_i$ w.r.t. $\mathbb{A}$. Let $i:=i+1$. 
+%
+\item Let ${\sf Comp}_\mathbb{A}(\reach(\Delta, A)):=G_i$.
+\end{enumerate}
+
+We are ready to present the procedure to solve the $k$-task boundedness problem for $k \ge 2$. 
+\begin{tcolorbox}[width=1.0\linewidth, title={Algorithm to solve the $k$-task boundedness problem for $k \ge 2$}]
+ For each $A \in \act_{\sf real}$ and $\mathbb{A} = \{A_1, \cdots, A_k\} \subseteq \act_{\sf real}$ such that $A,A_1, \cdots, A_k$ represent different tasks and $\lmd(A) \neq \singleinstance$, check whether there exists a witnessing cycle in the graph ${\sf Comp}_\mathbb{A}(\reach(\Delta, A))$. \\
+If the answer is yes for any such a pair $A$ and $\mathbb{A}$, then the procedure reports ``task unbounded''. Otherwise, if 
+%$|\aft(\act_{\sf real} \setminus \act_{\singleinstance})|+|\act_{\singleinstance}| \le 2$ (in this situation, there are at most two tasks in configurations of $\Aa$) or 
+$\Delta$ is a directed acyclic graph, then the procedure reports ``task bounded''. \\
+Otherwise, the procedure reports ``unknown''.
+\end{tcolorbox}
+
+\subsection*{Generation of the witnessing transition sequence}
+
+As mentioned before, task unboundedness suggests %an activity sequence which may result in 
+a potential security vulnerability. As a result, when this is spotted, it is desirable to synthesize a concrete transition sequence so that the developers can, for instance, follow this sequence to test and improve  their apps.  It turns out that the synthesis can be reduced to the the configuration reachability problem of the FSM $\Aa_{\Mm}$, i.e., whether there is a configuration matching a prescribed formula is reachable.
+
+Moreover, for a witness cycle for some $A\in\act_{\sf real}$,
+$\Cc = A_1 \xrightarrow{\alpha_1(\phi_1)} A_2 \cdots A_{n-1} \xrightarrow{\alpha_{n-1}(\phi_{n-1})} A_n$ 
+When $k>0$, some virtual transition, i.e., $A_i\xrightarrow{\alpha_i(\phi_i)} A_{i+1}\notin \Delta$, 
+but it summarizes the changes of the content of the $A$-task for some round of top task switching.
+Hence the existence of a witness cycle for $A$ is reduced to the existence of the activity sequence $\Cc'$ in the $A$-task, where $\Cc'$ is obtained by the following procedure:
+\begin{enumerate}
+    \item Let $\Cc' := [A_1]$, $i:= 1$,
+    \item Iterate the following procedure until $i = n$,
+        \begin{itemize}
+            \item if $\alpha_i = \startactivity$,
+                \begin{itemize}
+                    \item if $A_i=A_{i+1}$ and $\phi_i \models\stpflag\vee\rtfflag$, then $\Cc':=\Cc'$,
+                    \item otherwise, $\Cc':= [A_{i+1}]\cdot\Cc'$,
+                \end{itemize}
+            \item if $\alpha_i = \finishstart$,
+                let $\Cc' = [A_i]\cdot\Cc''$, $\Cc''\in\act^*$,
+                        \begin{itemize}
+                            \item if $A_i=A_{i+1}$ and $\phi_i \models\stpflag\vee\rtfflag$, 
+                                then $\Cc':=\Cc''$,
+                            \item otherwise, $\Cc':= [A_{i+1}]\cdot\Cc''$.
+                        \end{itemize}
+        \end{itemize}
+\end{enumerate}
+Note that among the activities in $\Cc'$ the leftmost activity of $\Cc'$ is the topmost in the $A$-task.
+
+From the encoding of task stacks in Section~\ref{sec:amass2fsm}, we know that for each $i: 1 \le i \le k_t$,
+\begin{quote}
+$X_{i N_{tsk} - 1}$ corresponds to the second to the last position of the word encoding the $i$th task and its value is the real activity of the task.
+\end{quote}
+
+Therefore, the existence of the activity sequence $\Cc' = [A_1',\dots,A_{n'}']$ (where $n'<\hbar$) in the $A$-task can be specified by the following formula,
+%consider the following formula
+
+%\bigvee \limits_{1 \le i \le k_t}
+%\left(
+$$
+%X_{1} = A \wedge 
+X_{N_{tsk} - 1} = A\ \wedge 
+%\left(
+    \bigvee \limits_{0 \le j \le \hbar - n'}
+    \bigwedge \limits_{1 \le k \le n'}
+X_{(j+k-1) (1+N_{ctn}+N_{trs}+N_{asn}) +1} = A_{k}'.
+%\right)
+%\bigvee \limits_{\footnotesize \begin{array}{c}\aft(B') = \aft(B),\\ B' \neq B\end{array}} 
+%\right).
+$$ 
+
+Therefore, the witnessing transition sequences can be generated by utilizing  {\nuxmv} to solve the resulting model checking problem, where $\hbar$ is set to $6$.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Fragment container unboundedness problem}\label{sec:frag-unbound}
+%Formally, an AMASS $\Mm$ is said to be \emph{fragment-stack-unbounded}, if for every $n \in \natnum$ there is a configuration $\rho$ of $\Mm$ such that $\epsilon \xrightarrow{\Mm} \rho$ and the height of fragment container of some activity of $\rho$ is at least $n$. 
+
+Recall that fragment containers are updated by the fragment transactions, that is, either all the actions in a transaction are executed or none of them are executed. Therefore, to detect the fragment container unboundedness vulnerability, it is necessary to reason at the level of fragment transactions rather than fragment actions.  
+%
+%In the sequel, we present an algorithm to solve the fragment container unboundedness problem. 
+Similar  to the previous case, %task unboundedness problem, 
+the general idea is to find %a sort of 
+witness cycle of fragment transactions. 
+
+%Before presenting the algorithm, 
+We start with introducing some notations to summarize the effects of fragment transactions on fragment containers.
+%
+%In the sequel, 
+Let $A$ be an activity with $\vgr(A) = (i_1, \cdots, i_k)$ and 
+$$T = (\beta_1(F_1, i'_1, x_1), \cdots, \beta_k(F_r, i'_r, x_r))$$ 
+be a fragment transaction such that $i'_j \in \{i_1, \cdots, i_k\}$ for each $j \in [r]$. 
+
+We define $U_{T, A, i_1}, \cdots, U_{T, A, i_k}$ as the subsequences of actions in $T$ that are applied to the container $i_1, \cdots, i_k$ respectively.
+Specifically, $U_{T, A, i_1}, \cdots, U_{T, A, i_k}$ can be computed inductively as follows.
+\begin{enumerate}
+    \item Initially let $j = 1$ and $U_{T, A, i_1} = \epsilon,\dots,U_{T, A, i_k} = \epsilon$.
+    \item Iterate the following procedure until $j > r$,
+        \begin{enumerate}
+            \item update $U_{T, A, i'_j}$ according to $\beta_j$, 
+            \begin{itemize}
+%                \item if $\beta_j = \ADD$, then $U_{T, A, i'_j} := \ADD(F_j) \cdot U_{T, A, i'_j} $,
+                \item if $\beta_j = \REP$, then let $U_{T, A, i'_j} = \REP(F_j)$,
+                \item otherwise, let $U_{T, A, i'_j} = U_{T, A, i'_j} \cdot \beta_j(F_j)$.
+            \end{itemize}
+            \item let $j = j+1$.
+        \end{enumerate}
+\end{enumerate}
+Note in the computation of $U_{T, A, i_1}, \cdots, U_{T, A, i_k}$, the identifier variables are ignored. 
+
+%
+Moreover, for $j \in [k]$, we define the \emph{weight} of $T$ with respect to the container $i_j$, denoted by $\weight_{T, A, i_j}$, which describes the update of $T$ on the height of container $i_j$, as follows. Let $U_{T, A, i_j} = (\beta'_1(F'_1), \cdots, \beta'_l(F'_l))$. 
+\begin{itemize}
+\item If $\beta'_{r}(F'_r) = \REP$ for some $r \in [l]$ (actually in this case, $l = 1$), then $\weight_{T, A, i_j} = -\infty$, 
+%
+\item otherwise, $\weight_{T, A, i_j} = \sum \limits_{r \in [l]} w_r$, where for $r \in [l]$, $w_r = 1$ if $\beta'_r = \ADD$, and $w_r = -1$ if $\beta'_r = \REM$.
+\end{itemize} 
+Moreover, let $\weight_{T, A} = (\weight_{T, A, i_1}, \cdots, \weight_{T, A, i_k})$. 
+
+Let us first consider an easy case for the fragment container unboundedness problem: If there are $A \in \act$ with $\vgr(A) = (i_1, \cdots, i_k)$ and a transition rule $A \xrightarrow{\mu} T$ such that $\weight_{T, A, i_j} > 0$ for some $j \in [k]$, then report ``fragment container unbounded''. The fragment container unboundedness in this case is attributed to the fact that the transition $A \xrightarrow{\mu} T$ can be applied for arbitrarily many times so that the height of fragment container $i_j$ becomes unbounded.
+
+Next, let us consider the general cases that there are no $A \in \act$ and transition rule $A \xrightarrow{\mu} T$ satisfying the aforementioned condition, that is, for each $A \in \act$ with $\vgr(A) = (i_1, \cdots, i_k)$ and each transition rule $A \xrightarrow{\mu} T$, we have $\weight_{T, A, i_j} \le 0$ for every $j \in [k]$. 
+
+For the general cases, we need to consider the transition rules of the form $F \xrightarrow{\mu} T$.
+Since the enablement of these transition rules depend on the top fragment of containers, it is necessary to determine the top fragments of containers. 
+We use a tuple $(\frag \cup \{\bot\})^k$ to denote the top fragments of containers, where $\bot$ denotes that the container is empty or the top fragment of the container cannot be determined. 
+Suppose the current activity is $A$ and its top fragments of containers are $(F_1, \cdots, F_k)  \in (\frag \cup \{\bot\})^k$. Then the top fragments of containers after applying $T$ to $A$, denoted by $\topfrag_T(F_1, \cdots, F_k)$, are defined as $(\topfrag_{U_{T, A, i_1}}(F_1), \cdots, \topfrag_{U_{T, A, i_k}}(F_k))$, where for every $j \in [k]$,
+\begin{itemize}
+\item if $U_{T, A, i_j} = \epsilon$, then $\topfrag_{U_{T, A, i_j}}(F_j)  = F_j$, 
+%
+\item otherwise, let the last action of $U_{T, A, i_j}$ be $\beta'(F')$,
+\begin{itemize}
+\item if $\beta' \neq \REM$ or $F' \neq F_j$, then $\topfrag_{U_{T, A, i_j}}(F_j) = F'$, 
+%
+\item otherwise, $\topfrag_{U_{T, A, i_j}}(F_j) = \bot$. (If $\beta' = \REM$ and $F' = F_j$, we cannot determine the top fragment of container $i_j$.)
+\end{itemize}
+\end{itemize}
+
+
+For each $A \in \act$, we compute an edge-labled graph $G_A = (V, E)$ by executing the following procedure.  Let $\vgr(A) = (i_1, \cdots, i_k)$.
+\begin{enumerate}
+\item Let $G_0$ be the graph comprising all the edges $v_0 \xrightarrow{\weight_{T, A}} (T, \topfrag_{T}(\bot^k))$ such that $A \xrightarrow{\mu} T$ is a transition rule in $\Mm$ and $\weight_{T, A, i_j} \le 0$ for every $j \in [k]$, where $v_0$ is a special vertex.
+%
+\item  Let $i = 0$. Iterate the following procedure until $G_{i+1} = G_i$: Obtain $G_{i+1}$ from $G_i$ by adding the following edges: 
+For each vertex $(T, \vec{F})$ in $G_i$ with $\vec{F} = (F_1, \cdots, F_k)$ and each transition rule $F_j \xrightarrow{\mu} T'$ such that 
+$j \in [k]$ and $F_j \neq \bot$, add the edge $(T, \vec{F}) \xrightarrow{\weight_{T', A}} (T', \topfrag_{T'}(\vec{F}))$.
+%
+\end{enumerate}
+Note that each edge of $G_A$ is labeled by a tuple from $(\natnum \cup \{-\infty\})^k$.
+
+A \emph{witness cycle} of $G_A$ for $A \in \act$ is a cycle 
+%
+$(T_0, \overrightarrow{F_0}) \xrightarrow{\overrightarrow{w_1}} (T_1, \overrightarrow{F_1}) \cdots \xrightarrow{\overrightarrow{w_m}} (T_m, \overrightarrow{F_m})$
+%
+such that  for some $j \in [k]$, $\sum \limits_{r \in [m]} w_{r, j} > 0$, 
+%and $F_{r, j} \neq \bot$ for every $r \in [m]$, 
+where $\overrightarrow{w_r} = (w_{r, 1}, \cdots, w_{r, k})$ for each $r \in [m]$. Intuitively, $\sum \limits_{r \in [m]} w_{r, j} > 0$ guarantees that the height of the container $i_j$ is strictly increased after executing the all fragment transactions in the cycle. Note that in the definition of witness cycle, it is not required that $F_{r, j} \neq \bot$ for every $r \in [m]$ since the top fragments of the container $i_j$ may not be used in the transitions and what is concerned is only the height increase of the container $i_j$.
+
+
+Finally, %the fragment container unboundedness problem is solved by the following
+the procedure is summarized as follows.
+\begin{tcolorbox}[width=1.0\linewidth, title={Algorithm to decide the fragment container unboundedness problem}]
+%\begin{enumerate}
+%\item 
+If there are $A \in \act$ with $\vgr(A) = (i_1, \cdots, i_k)$ and a transition rule $A \xrightarrow{\mu} T$ such that $\weight_{T, A, i_j} > 0$ for some $j \in [k]$, then report ``fragment container unbounded''.
+%\item 
+
+Otherwise, if there is $A \in \act$ such that $G_A$ contains a witness cycle, then report ``fragment container unbounded''. 
+%\item Otherwise, if $G_A$ is a directed acyclic graph for every $A \in \act$, then report ``fragment container bounded''.
+%\item 
+
+Otherwise, report ``unknown''.
+%\end{enumerate}
+\end{tcolorbox}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\hide{
+We start with some notations: 
+\begin{itemize}
+    \item $\ADD(R,i)$, where $R = [F_1,\dots,F_k]$ denotes the action where the fragments $R$ are added to the container $i$ of the current activity, and $\REP(R,i)$ is the same as $\ADD(R,i)$, except that the container $i$ is cleared before adding $R$. 
+    \item $\nopstack[(\beta_1(R_1, i_1), \cdots, \beta_k(R_k, i_k))]$ denotes that the actions $\beta_1(R_1, i_1),\cdots, \beta_k(R_k, i_k)$ are executed sequentially.
+\end{itemize}
+For a transaction $T = (\beta_1(F_1, i_1), \cdots, \beta_k(F_r, i_r))$ and an activity $A$, if $\vgr(A) = (i_1',\dots,i_k')$.
+We let $U_1,\dots,U_k$ as the actions sequences which are computed by the following algorithm,
+\begin{enumerate}
+    \item Initially let $j := 1$ and $U_1 := [],\dots,U_k := []$,
+    \item Iterate the following procedure until $j > r$,
+        \begin{enumerate}
+            \item if $\exists j'\in[k], i_j = i_{j'}'$, 
+            \begin{itemize}
+                \item if $\beta_j = \ADD$, then $U_{j'} := U_{j'}\cdot[\ADD(F_j,i_j)]$,
+                \item if $\beta_j = \REP$, then $U_{j'} := [\REP(F_j,i_j)]$,
+            \end{itemize}
+            \item $j := j+1$
+        \end{enumerate}
+\end{enumerate}
+Since each fragment stack is independent, then $T' = U_1\cdot. . .\cdot U_k$ has the same effect on fragment stacks as $T$.
+Hence we let $\form_A(T) = (\beta_1(R_1, i_1'), \cdots, \beta_k(R_k, i_k'))$, where
+for each $j\in[k]$, $\beta_j = \beta_1'$, $R_j = [F_1',\dots,F_l']$, with $U_j = (\beta_1'(F_1', i_1'), \cdots, \beta_l'(F_l', i_l'))$, and $\form_A(T)$ has the same effects on the fragment stacks as $T$. 
+
+Let $\act_{\REP}$ be the set of activities $A\in\act$ such that for each $A\xrightarrow{\mu} T\in\Delta$, where $\form_A(T) = (\beta_1(R_1, i_1), \cdots, \beta_k(R_k, i_k)),\forall j\in[k], \beta_j=\REP$.
+%For a given activity $A\in\act$, if $\exists A\xrightarrow{\mu} T\in\Delta$, where $\form_A(T) = (\beta_1(R_1, i_1), \cdots, \beta_k(R_k, i_k)),\exists j\in[k], \beta_j=\ADD$, the height of fragment stack $V_{i_j}$ is unbounded. Hence we consider the case that for each $A\xrightarrow{\mu} T\in\Delta$, where $\form_A(T) = (\beta_1(R_1, i_1), \cdots, \beta_k(R_k, i_k)),\forall j\in[k], \beta_j=\REP$.\\
+For each $A\in\act_{\REP}$, for each transition $A\xrightarrow{\mu} T$, we let $G_{A,T}=(V,E)$ be an edge-labeled graph which is computed by the following algorithm,
+\begin{enumerate}
+    \item Let $G_0 = (V_0,E_0)$, $V_0 := \{( (R_1,i_1),\dots,(R_k,i_k) )\}$, $E_0 := \emptyset$ and $i:=0$.
+    \item Iterate the following procedure until $G_{i+1} = G_{i}$;
+        For each $v = ( (R_1,i_1),\dots,(R_{k},i_{k}) ) \in V_{i}$, for each $j\in[k]$, let $R_j = [F_1,\dots,F_l]$, 
+        \begin{itemize}
+            \item if $\tau = F_1\xrightarrow{\mu'}T'\in\Delta$, where $\form_A(T') = (\beta_1'(R_1', i_1), \cdots, \beta_k'(R_k', i_k))$, then we let $v' = (R_1'',\dots,R_k'')$, for each $j'\in[k]$, $R_{j'}''=R_{j'}'$ if $|R_{j'}'|>0$; $R_{j'}''=R_{j'}$ otherwise.  
+                We let $V_{i+1}:= V_{i}\cup\{v'\}$, $E_{i+1} := E_{i}\cup\{(v,(\tau,L),v')\}$, where $L = (l_1,\dots,l_k)$, for each $j'\in[k]$, $l_{j'} = 0$ if $|R_{j'}'| = 0$; $l_{j'} = 1$ if $|R_{j'}'| > 0\wedge\beta_{j'}' = \ADD$; $l_{j'} = -\infty$ otherwise.
+                We let $G_{i+1}:=(V_{i+1}, E_{i+1})$.
+        \end{itemize}
+    \item We let $G_{A,T}=G_{i}$
+\end{enumerate}
+Our idea is to search, for each $A\in\act_{\REP}$, for each transition $A\xrightarrow{\mu} T$, a witness cycle from $G_{A,T}$.
+
+Formally a witness cycle is a simple cycle in the graph of the form
+$$C = v_1\xrightarrow{\tau_1,L_1}v_2\dots v_{n-1}\xrightarrow{\tau_{n-1}, L_{n-1}}v_n$$
+where $n\ge 2$, $L_j = (l_{j,1},\dots,l_{j,k})$ for each $j\in[n]$, satisfying $\exists j\in[k]$, $\Sigma_{m\in[n-1]}l_{m,j}>0$.
+Our algorithm is as follows:
+\begin{itemize}
+    \item If there exists $A\in\act$, $A\xrightarrow{\mu}T\in\Delta$, where $\form_A(T) = (\beta_1(R_1, i_1), \cdots, \beta_k(R_k, i_k))$, $\exists j\in[k]$, $\beta_j = \ADD$, 
+        then returns ``fragment stack unbounded'',
+    \item otherwise,
+        \begin{itemize}
+            \item if a witness cycle exists for some $A\in\act_{\REP}$, 
+        then returns ``fragment stack unbounded'',
+    \item otherwise returns ``unknown''.
+        \end{itemize}
+\end{itemize}
+}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ 
+

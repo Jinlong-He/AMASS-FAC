@@ -1,0 +1,256 @@
+%!TEX root = main.tex
+
+%\subsection{Extraction of the {\AMASS} models out of APK files}
+
+The goal of this section is to show how we build {\AMASS} models out of the APK files of the Android apps.
+
+%To analyze the behaviors of Android apps with respect to the multitasking mechanism, it is necessary to extract the {\AMASS} model out of the APK file of Android apps.
+
+%\subsection*{Static Extraction}
+In Android apps, switching between components is by sending inter-component communication (ICC) messages to the Android system. 
+Each ICC message is represented by an \texttt{Intent} object that carries a set of data items.
+By resolving 
+the ICC messages, we can extract both the source and destination of %a transition 
+the switching and the data items it carries.  
+%Thus, to construct an {\AMASS} model for an Android app, the precise resolution of ICC messages makes the first step.
+%\tl{what does it mean ICC resolution?}
+
+
+The recent work \cite{YZ+22} studied the available ICC resolution tools and performed a practical evaluation on both hand-crafted benchmarks as well as large-scale real-world apps.
+The evaluation shows that (1) the fragment is a key feature that is widely used in the component transitions; (2) most of state-of-the-art ICC resolution tools miss the ICCs involving activities and fragments. 
+A recent %ICC resolution 
+tool \textit{ICCBot}~\cite{ICCBot_paper} %is a recently-developed , which 
+resolves the component transitions connected by fragments and activities,  %. Compared with the state-of-the-art tools, ICCBot 
+achieves a higher success rate and accuracy.
+% 
+%Although we can use ICCBot to obtain a component transition graph from an APK file, there 
+However, ICCBot is insufficient for obtaining an {\AMASS} model for the following two reasons. %. More specifically,
+\begin{itemize}
+\item ICCBot fails to decompile the APK files of some commercial apps, thus their models cannot be constructed. 
+%
+\item {\AMASS} models contain more information about the component transitions, in particular, ICCBot ignores the API ``addToBackStack()'' which can allow pushing transactions to the fragment transaction stack, and ignores the API \texttt{finish()} which can pop the current activity.
+% the fragment transactions when manipulating fragments,
+%
+\end{itemize}
+
+To this end, we extend ICCBot to ICCBot$_{\AMASS}$ in the following aspects. % to extract the {\AMASS} models.
+%Specifically,  ICCBot$_{AMASS}$ extends  ICCBot in the following aspects. 
+\begin{itemize}
+\item At first, ICCBot$_{\AMASS}$ %extends ICCBot to 
+records the calls to the API \texttt{finish()} and associates them with the corresponding calls to \texttt{startActivity()} or \texttt{startActivityForResult()}. This enables ICCBot$_{\AMASS}$ to accurately track the termination of the activities and identify transition rules that are affected by these terminations. 
+%
+\item Additionally, ICCBot$_{\AMASS}$ monitors the calls of the API \texttt{addToBackstack()}, so that the transition rules involving fragments can be accurately constructed. In contrast, ICCBot does not record \texttt{addToBackstack()}. Therefore, it misses the information $\mu \in \{\opstack, \nopstack\}$ in the transition rules $A \xrightarrow{\mu} T$ or $F \xrightarrow{\mu} T$.
+%
+\item Moreover, ICCBot$_{\AMASS}$ provides means to take cross-app ICCs into consideration when constructing {\AMASS} models.
+%
+\item Finally, for the commercial apps that cannot be decompiled,  ICCBot$_{\AMASS}$ applies a dynamic approach to extract the {\AMASS} models. 
+\end{itemize}
+% records the calls to the API \texttt{finish()} and attach them to the occurrences of \texttt{startActivity()} or \texttt{startActivityForResult()}.
+% extracts the intent flags for starting activities.  
+%ICCBot ignored the intent flags $\phi$, it is extended to 
+% ICCBot$_{\AMASS}$ tracks the usage of the API \texttt{addFlags()} on each Intent object and extract its integer value. Because this integer value is obtained by combining the intent flags with bit operations, we need to reverse the bit operations to obtain the original intent flags.
+%
+%\item 
+% Moreover, ICCBot$_{\AMASS}$ %extends ICCBot to 
+% records the calls to the API \texttt{finish()} and attach them to the occurrences of \texttt{startActivity()} or \texttt{startActivityForResult()}.
+%
+%\item 
+%
+%Furthermore, ICCBot$_{AMASS}$ 
+% It also tracks the occurrences of the API \texttt{addToBackstack()} to record the fragment transactions.
+
+
+%for the cross-app ICC, ICCBot$_{\AMASS}$ provides users with the option to apply the necessary APK files related to the cross-app ICC, assisting ICCBot$_{\AMASS}$ in constructing the comprehensive {\AMASS} model. More specifically, ICCBot$_{\AMASS}$ constructs an {\AMASS} model that includes the activities, fragments, transition rules, and other components of the relevant apps and the main activity of the analyzed app is set as the main activity $A_0$ of the {\AMASS} model. In the sequel, these apps can be treated as one app for further analysis. Out of the extracted models from F-Droid (3,471 models) and Google Play (4,612 models), a total of 311 (F-Droid) and 501 (Google Play) models involve cross-app ICC. To identify these relevant apps, we search for their package names mentioned in the cross-app ICC. Consequently, we discover 125 (F-Droid) and 221 (Google Play) related APK files that facilitate the construction of the {\AMASS} models.
+
+In the sequel, we describe more details about how ICCBot$_{\AMASS}$ takes cross-app ICCs into consideration as well as utilizes a dynamic approach to construct {\AMASS} models for these apps that cannot be decompiled.
+
+\paragraph{Model extraction for cross-app ICCs.} 
+If for an app, the multiple APK files that are involved in the cross-app ICCs of this app are provided, then ICCBot$_{\AMASS}$ can construct an {\AMASS} model that captures the behaviors of all these multiple APK files. The algorithm goes as follows. 
+\begin{enumerate}
+\item At first, for the APK file corresponding to an app, ICCBot$_{\AMASS}$ constructs an {\AMASS} model, where the cross-app ICCs starting from this app are recorded but not processed. 
+%
+\item Then for the model, we try to manually identify the APK files involved in these cross-app ICCs by searching for their package names. 
+%
+\item If the APK files involved in the cross-app ICCs are identified successfully for the app, then all these multiple APK files, including the original APK file for the app, are processed and an {\AMASS} model to capture the behaviors of all these apps is constructed. 
+\end{enumerate}
+Afterwards, these models can be analyzed just as a model extracted from an app containing no cross-app ICCs. 
+
+%Out of the models that extracted from the APK files, 
+%Out of the 3,471 models that are extracted from the APK files in F-Droid (called F-Droid models for short) and 4,612 models that are extracted from the APK files in Google Play (called Google-Play models for short), ICCBot$_{\AMASS}$ discovers that 311 F-Droid models and 501 Google-Play models respectively involve cross-app ICCs. 
+%Note that although these models are discovered to involve cross-app ICCs, each of these models is extracted from \emph{one} APK file and the cross-app ICCs therein have not been dealt with yet. 
+%To remedy this, we tried to manually identify the APK files involved in these cross-app ICCs by searching for their package names. In the end, for 125 F-Droid apps and 211 Google-Play apps respectively, we provided the missing APK files involved in the cross-app ICCs of these apps and successfully constructed the {\AMASS} models for them where the cross-app ICCs are modeled. Afterwards, these models can be analyzed in the same way as a model that is extracted from one APK file. 
+
+\paragraph{Dynamic model extraction for unsuccessfully decompiled APK files. }
+Roughly speaking, the algorithm to extract {\AMASS} models dynamically from APK files works as follows.
+\begin{enumerate}
+\item We first execute all click events of the foreground activity to search for new activities. 
+%
+\item When clicking some events in the foreground activity, some new UI widgets, e.g. menu widgets, may appear (though the foreground activity is unchanged), resulting in some new click events.  When executing these newly produced click events, some UI widgets may appear and even more new click events can be produced. The click events in the foreground activity are organized hierarchically.  
+%	
+\item We apply a depth-first search to execute all the sequences of hierarchically-organized click events, up to some depth. If a new activity is found,  the associated transition rule for starting the new activity is produced, where the intent flags are guessed. For instance, if a non-top task is moved to the top and a new instance of the activity $B$ of the ``standard'' launch mode is pushed to it, then the ``$\ntkflag$'' flag can be guessed. 
+\end{enumerate}
+
+%Android Debug Bridge (adb) is a versatile command-line tool that lets you communicate with a device.
+%Given an Android app, starting from the main activity of the app, intuitively, we %the following procedure is executed to 
+%extract the {\AMASS} model dynamically as follows.
+%We first execute all click events of the foreground activity to search for new activities as well as the transitions to start the new activities. 
+	
+ 
+
+%\begin{tcolorbox}[width=1.0\linewidth, title={Procedure of UIAutomator to extract {\AMASS} model}]
+% Execute all click events of the foreground activity to search for new activities as well as the transitions to start the new activities. 
+% 
+% When clicking some events in the foreground activity, some new UI widgets, e.g. menu widgets, may appear (though the foreground activity is unchanged), resulting in some new click events. 
+% 
+% When executing these newly produced click events, some UI widgets may appear and even more new click events can be produced. Thus, the click events in the foreground activity are organized hierarchically.  
+% 
+% We apply a depth-first search to execute all the sequences of hierarchically-organized click events, up to some depth. If a new activity is found, then the associated transition for starting the new activity is produced, where the intent flags are guessed. For instance, if a new instance of the activity $B$ of the ``standard'' launch mode is pushed to a non-top task, then the ``$\ntkflag$'' flag can be guessed. 
+%\end{tcolorbox}
+ 
+%Note that the launch modes and the task affinities of activities can be obtained from the manifest files.  
+ 
+
+% these new click events, that is, we use UIAutomator to execute one click event, then execute one of the newly produced  click events, before  
+%
+%\end{enumerate}
+
+%\end{itemize}
+%$A \xrightarrow{\mu} T$ or $F \xrightarrow{\mu} T$, $A$ or $F$ is the caller activity or fragment, $T$ is the fragment transaction
+
+%As ICCBot considers more about the transition among components but not the construction of an {\AMASS} model, we extend the original ICCBot to ICCBot$_{AMASS}$ with more complete Intent and Fragment modeling.
+
+%Recall that the transition $A \xrightarrow{\alpha(\phi)} B$ contains a caller activity $A$, a callee activity $B$, an action $\alpha$, and intent flags $\phi$. 
+%In terms of modeling by an {\AMASS}, the action is \textit{start} when \texttt{startActivity()} or \texttt{startActivityForResult()} is invoked, while it is \textit{finishStart} when \texttt{finish()} is invoked.
+%And for the transition $A \xrightarrow{\mu} T$ or $F \xrightarrow{\mu} T$, $A$ or $F$ is the caller activity or fragment, $T$ is the fragment transaction. 
+%For the {\AMASS} modeling, the fragment transaction comprises \textit{add}, \textit{replace} and \textit{addBack} when the corresponding APIs \texttt{add()}, \texttt{replace()}, and \texttt{addToBackstack()} are invoked.
+
+%In the original ICCBot, the intent flags $\phi$ were not modeled. So we track the usage of API \texttt{addFlags()} on each Intent object and extract its integer value. Considering that the integer value is obtained by combining the intent flags with bit operations, we reverse the bit operations to obtain the original intent flags.
+%Besides, the original ICCBot ignores the status of a component after starting, which means that only the operations like start, add and replace are considered. 
+%To construct an {\AMASS} model, we extend it by capturing other actions, like finish and addToBackstack and recording their behaviors.
+%Finally, based on the component graph provided by ICCBot, we generate AMASS that contains the activity transition $A \xrightarrow{\alpha(\phi)} B$ and fragment loading transition $E \xrightarrow{\beta} F$ and excludes other irrelevant edges.
+%After extending to ICCBot$_{AMASS}$, we get the transitions among activities and fragments, as well as the actions that are performed along with a transition.
+%Adopting this information, we could construct the AMASS for each app.  
+%
+%%%%%%%%%%%%%%%%%%%removed%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%removed%%%%%%%%%%%%%%%%%%%%%%%%
+% \hide{
+% Nevertheless, the aforementioned procedure does not work very well while dealing with some commercial apps which could not be decompiled. 
+% To tackle this, we propose a dynamic method to extract the transition rules set of the AMASS model from APK file, our algorithm is based on the following two step procedure.
+% \begin{enumerate}
+%     \item We use UIAutomator to search the new activities by executing the clickable events in the foreground activity, and guess the transition rule via the evolution of the configuration then update the transition rules set.
+%     \item For each new activity, we repeat the step 1 until there is no new activity found.
+% \end{enumerate}
+
+\begin{algorithm}[htbp]
+  \SetAlgoLined
+  \tcc*[h]{Two global variables: $\Delta$ and $acts$}\;
+  $\rho$ $\leftarrow$ $adb.getTasks()$\;
+  $topAct$ $\leftarrow$ $adb.getTopActivity()$\;
+  $visitedActs$ $\leftarrow$ $\{topAct\}$\;
+  $DynDFS(\rho,topAct,[],d)$\;
+
+  \While{$acts \neq \emptyset$} {
+      \ForEach{$(newAct, newEvents) \in acts$}{ 
+     \eIf{$newAct \in visitedActs$}{
+         $acts \leftarrow acts-\{(newAct, newEvents)\}$\;
+             continue\;
+         }{
+          $visitedActs$ $\leftarrow$ $visitedActs \cup \{newAct\}$\;
+          $UIAutomator.restart()$\;
+          \ForEach{$event \in newEvents$}{ 
+              $UIAutomator.click(event)$\;
+          }
+          $\rho$ $\leftarrow$ $ADB.getTasks()$\;
+          $DynDFS(\rho,newAct,newEvents,d)$\;
+      }
+  }
+  }
+    \caption{$AMASSExplore()$}
+    \label{alg-explpore}
+\end{algorithm}
+
+
+
+The pseudo-code of the dynamic model-extraction algorithm is given in Algorithm~\ref{alg-explpore}, namely, the procedure $AMASSExplore()$.  
+The procedure utilizes two global variables, $\Delta$ and $acts$, where $\Delta$ represents the current set of transition rules that are discovered so far, and $acts$ stores the pairs $(A, events)$, where $A$ is an activity and $events$ is a sequence of click events so that from the main activity, if these click events are executed by UIAutomator, then an instance of $A$ is started. The procedure $AMASSExplore()$ calls the procedure $DynDFS(\rho, srcAct, events, d)$ (see Algorithm~\ref{alg-dyndfs}) to do a depth-first search for new activities, starting from $srcAct$, up to the depth $d$ (i.e. the length of the click events reaching a new activity). The two procedures relies on some APIs of UIAutomator and ADB, whose meanings are described below.  
+\begin{itemize}
+\item $UIAutomator.getClickEvents()$ returns the set of clickable events in the foreground activity of the app under test,
+\item $UIAutomator.click(e)$ executes the click-event $e$,
+\item $UIAutomator.restart()$ restarts the the app under test,
+\item $ADB.getTasks()$ returns the content of the back stack. 
+\end{itemize}
+
+
+For each $(newAct, newEvents) \in acts$, $AMASSExplore()$ calls the procedure $DynDFS(\rho, newAct, newEvents, d)$ to search dynamically for new activities, starting from $newAct$, and store the newly discovered activities as well as the corresponding sequences of click events into $acts$, up to the depth $d$. Here $d$ represents the length of the click-events sequence required to reach the new activity from $newAct$. Note that $newEvents$ are used by UIAutomator to reach $newAct$ starting from the main activity.  In some cases, pressing buttons may not start a new activity, but instead, new widgets appear (e.g., the menu widget), requiring us to continue searching for new click-events in these widgets to reach the new activity.
+
+\begin{algorithm}[htbp]
+  \SetAlgoLined
+  \SetKwInOut{Input}{input}
+    \SetKwInOut{Output}{output}
+  \Input{$\rho, srcAct, events, d$}
+\tcc*[h]{Dynamic depth-first search new activity with UIAutomator, up to depth $d$}\;
+         \uIf{$d > 0$}{
+                 \ForEach{$event \in UIAutomator.getClickEvents()$}{ 
+                     $UIAutomator.click(event)$\;
+                     $newAct$ $\leftarrow$ $ADB.getTopActivity()$\;
+                     $newEvents$ $\leftarrow$ $events\cdot event$\;
+        \uIf{$newAct = srcAct$}{
+            \uIf{$d>1$}{
+                $DynDFS(\rho, srcAct, newEvents, d - 1)$\;
+                 \tcc*[h]{Decrement $d$ and continue the dynamic DFS.}\;
+            }
+            \Else {
+                 $UIAutomator.restart()$\;
+                 \ForEach{$event \in events$}{ 
+                     $UIAutomator.click(event)$\;
+                 }
+            }
+         }         
+         \Else {
+             \tcc*[h]{Discover new transitions and refine the AMASS model}\;             
+             $\rho'$ $\leftarrow$ $ADB.getTasks()$\;
+             $\tau'$ $\leftarrow$ $guessTrans$($srcAct$, $\rho$, $newAct$, $\rho'$)\;
+             $\Delta$ $\leftarrow$ $\Delta\cup \{\tau'\}$\;
+             $acts$ $\leftarrow$ $acts\cup \{(newAct,newEvents)\}$\;
+             $UIAutomator.restart()$\;
+             \ForEach{$event \in events$}{ 
+                 $UIAutomator.click(event)$\;
+             }
+         }
+    }
+} 
+    \caption{$DynDFS(\rho, srcAct, events, d)$}
+    \label{alg-dyndfs}
+\end{algorithm}
+
+
+If a new activity is found during the execution of the procedure $DynDFS(\rho, srcAct, Events, d)$, with $\rho'$ being the current configuration, then the function $guessTrans(srcAct, \rho, newAct, \rho')$ is used to infer the intent flags based on the evolution of the configuration, so that a new transition rule $\tau'$ can be formed and put into $\Delta$. Moreover, the sequence of click events that reach $newAct$ from $srcAct$ is recorded in $newEvents$ and the pair $(newAct, newEvents)$ is put into $acts$.  
+In order to continue searching for new activities, we need to return to the activity $srcAct$. Instead of pressing the back button, we restart the app and execute the corresponding $events$ using UIAutomator. This is necessary because in some cases, pressing the back button may not allow us to reach the previous activity, as indicated by the semantics in Section~\ref{sec:amass}.
+
+
+%UIAutomator to discover new activities within the activities stored in $acts$, until no new activity is found. Each time $DynDFS()$ is called to search for activity $A$ with $(A, events) \in acts$, we need to reach $A$ by restarting the app and executing the corresponding $events$ using UIAutomator. The depth here represents the length of the click-events sequence required to reach the new activity from the foreground activity. In some cases, pressing buttons may not change the foreground activity, but instead, new widgets appear (e.g., the menu widget), requiring us to continue searching for new click-events in these widgets to reach the new activity.
+
+
+% The aforementioned algorithm is presented as the procedure $AMASSExplore()$ in Algorithm~\ref{alg-explpore}, which uses tow global variables $\Delta$ and $acts$, where $\Delta$ is the current transition rules set of the AMASS model (since it may be dynamically modified in the Algorithm~\ref{alg-dyndfs}), $acts$ stores the set of the pair in form $(A,events)$ where $events$ is the click-events sequence which could be executed by UIAutomator from the main activity of the app to reach the activity $A$. Specifically,
+% \begin{itemize}
+%     \item the procedure $AMASSExplore()$ repeatedly calls the procedure $DynDFS()$ (see Algorithm~\ref{alg-dyndfs}) to do a depth-first dynamic search based on UIAutomator to search new activities in the activity we added in $acts$, until there is no new activity found. Each time we call the procedure $DynDFS()$ to search the activity $A$ with $(A,events)\in acts$, we need to reach $A$ via restarting the app and executing the $events$ by UIAutomator. Here the depth is the length of the click-events sequence to reach the new activity from the foreground activity. Since when we press on some buttons, the foreground activity is not changed, but some new widgets appear ($e.g.$ the menu widget), hence we need continue to search the new click-events in the new widget to reach the new activity. 
+%     \item If some new activity is found by the procedure $DynDFS()$, $guessTrans()$ is to guess the intent flags of the transition rule according to the evolution of the configuration and we will update the transition rules set $\Delta$. Furthermore, we need to go back to the previous activity to continue to search new activities, we restarts the app and execute $events$ by UIAutomator instead of pressing on the back button, since sometimes we couldn't reach the previous activity via pressing on the back button according to the semantics defined in Section~\ref{sec:amass}.
+% \end{itemize}
+%\paragraph{Limitations of dynamic model extraction}
+
+The aforementioned dynamic model-extraction algorithm enables us to extract models from the APK files that cannot be decompiled successfully. 
+Nevertheless, the models extracted dynamically may be inaccurate. Specifically, the following three types of inaccuracies may exist in the dynamically-extracted models.
+\begin{itemize}
+\item The intent flags guessed in the algorithm may be incorrect, since the effects of different combinations of intent flags may be equivalent.
+%
+\item Some transition rules involving fragments may be missed, since fragments are ignored in the algorithm, due to the fact that it is challenging to identify dynamically the fragment to which an UI widget belongs.
+%
+\item Furthermore, even the transition rules for activities may be incomplete, since it is typical that the dynamic exploration does not cover all the possible behaviors of Android apps.    
+\end{itemize}
+Finally, compared to the static model extraction, the dynamic model extraction is slower in general, as demonstrated by the experiments in Section~\ref{sec:eva} (see Table~\ref{tab:amass}-\ref{tab:amassdyn} for details).
+
+%Although, our dynamic model extraction process faces certain limitations, it significantly enhances the performance of ICCBot$_{\AMASS}$ by enabling model extraction for the apps that cannot be extracted by the static process (cf. Section~\ref{sec:eva}). Out of the 3,867 F-Droid (resp. 5,020 Google Play) apps, our static process fails on 1,287 F-Droid (resp. 1,212 Google Play) apps. For these apps, dynamic model extraction process extracts 891 (resp.\ 804) {\AMASS} models, consequently, it helps ICCBot$_{\AMASS}$ to extract an additional $19.1\%$ models. Furthermore, the average number of activities (resp. transition rules) of these extracted models by the dynamic model extraction process exceeds that of the extracted models by the static process, thereby maintaining the accuracy of the model extraction of ICCBot$_{\AMASS}$.
+
+% }
+%%%%%%%%%%%%%%%%%removed%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

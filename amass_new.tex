@@ -1,0 +1,225 @@
+%!TEX root = main.tex
+
+In this section, we introduce \textbf{A}ndroid \textbf{M}ultit\textbf{A}sking \textbf{S}tack \textbf{S}ystem (\AMASS), a formal model to capture the Android multitasking mechanism. Our presentation is inspired by the previous work~\cite{ChenHSWWY18,HCWWY19}, but the model significantly deviates from the ASM therein. Throughout the paper, we let $[m]=\{1, \cdots, m\}$, $\Nn$ be the set of natural numbers, and $\PosNat$ be the set of positive natural numbers. 
+
+Following the overview of Section~\ref{sec:amm}, we shall concentrate on the launch mode, the task affinity, the intent flags when an activity is launched, and the fragment transaction when a fragment is started.  
+\begin{itemize}
+\item There are four launch modes in Android: ``standard ($\STD$)'', ``singleTop ($\STP$)'', ``singleTask ($\STK$)'' and ``singleInstance ($\SIT$)''.  We shall consider all of them. 
+%
+\item As mentioned before, we focus on 10 intent flags in this paper, namely, 
+\begin{itemize}
+\item $\rm FLAG\_ACTIVITY\_NEW\_TASK$ ($\ntkflag$),
+\item $\rm FLAG\_ACTIVITY\_NEW\_DOCUMENT$ ($\ndmflag$),
+\item $\rm FLAG\_ACTIVITY\_MULTIPLE\_TASK$ ($\mtkflag$),
+\item $\rm FLAG\_ACTIVITY\_SINGLE\_TOP$ ($\stpflag$),
+\item $\rm FLAG\_ACTIVITY\_REORDER\_TO\_FRONT$ ($\rtfflag$),
+\item $\rm FLAG\_ACTIVITY\_CLEAR\_TOP$ ($\ctpflag$),
+\item $\rm FLAG\_ACTIVITY\_CLEAR\_TASK$ ($\ctkflag$),
+\item $\rm FLAG\_ACTIVITY\_PREVIOUS\_IS\_TOP$ ($\pitflag$),
+\item $\rm FLAG\_ACTIVITY\_NO\_HISTORY$ ($\nohflag$),
+\item $\rm FLAG\_ACTIVITY\_TASK\_ON\_HOME$ ($\tohflag$).	
+\end{itemize}
+
+\item There are three actions in fragment transaction: ``add ($\ADD$)'', ``replace ($\REP$)'' and ``remove ($\REM$)'', and we consider all of them. 
+The semantics of these actions are related to the identifiers of fragment instances which we assume are from $\PosNat$. 
+\end{itemize}
+%In this paper, we consider the ADD and REP actions. The introduction of the REM action would make the  definition of the semantics much more complicated and is left as the future work.  
+Moreover, for fragment transactions, we use the tag {\opstack} (resp.\ {\nopstack}) to represent the fact that a fragment transaction will be pushed (resp.\ will not be pushed) to the fragment transaction stack. 
+
+All the abbreviations and their full names are summarized in Table~\ref{tab-abr-full} to facilitate the later references. Note that $\STP$ is used as abbreviations both for the SingleTop launch mode and for the $\rm FLAG\_ACTIVITY\_SINGLE\_TOP$ intent flag. This is acceptable since it is usually clear from the context whether $\STP$ denotes a launch mode or an intent flag.
+
+
+\begin{table}[htbp]
+    \centering
+    \begin{tabular}{| c | c |}
+    \hline
+    \textbf{Abbreviation}  & \textbf{Full name} \\
+    \hline
+    $\STD$ & Standard  \\
+    \hline
+    $\STP$ & SingleTop \\
+    \hline
+    $\STK$ & SingleTask \\
+    \hline
+    $\SIT$  & SingleInstance \\
+    \hline
+    $\stpflag$ & $\rm FLAG\_ACTIVITY\_SINGLE\_TOP$\\
+    \hline
+    $\ctpflag$ &  $\rm FLAG\_ACTIVITY\_CLEAR\_TOP$ \\
+    \hline
+    $\rtfflag$ & $\rm FLAG\_ACTIVITY\_REORDER\_TO\_FRONT$ \\
+    \hline
+    $\ntkflag$ & $\rm FLAG\_ACTIVITY\_NEW\_TASK$ \\
+    \hline
+    $\ndmflag$ & $\rm FLAG\_ACTIVITY\_NEW\_DOCUMENT$\\
+    \hline
+    $\mtkflag$ & $\rm FLAG\_ACTIVITY\_MULTIPLE\_TASK$  \\
+    \hline
+    $\ctkflag$ & $\rm FLAG\_ACTIVITY\_CLEAR\_TASK$  \\
+    \hline
+    $\pitflag$ & $\rm FLAG\_ACTIVITY\_PREVIOUS\_IS\_TOP$ \\
+    \hline
+    $\nohflag$ & $\rm FLAG\_ACTIVITY\_NO\_HISTORY$ \\
+    \hline
+%    $\rtnflag$ & $\rm FLAG\_ACTIVITY\_RESET\_TASK\_IF\_NEEDED$ \\
+%    \hline
+    $\tohflag$ &$\rm FLAG\_ACTIVITY\_TASK\_ON\_HOME$ \\
+    \hline
+    $\ADD$ & add \\
+    \hline
+    $\REP$ & replace \\
+    \hline
+    $\REM$ & remove \\
+    \hline
+    $\opstack$ & added to the fragment transaction stack \\
+    \hline
+    $\nopstack$ & not added to the fragment transaction stack \\
+    \hline
+    \end{tabular}
+    \caption{Abbreviations and their full names}
+    \label{tab-abr-full}
+\end{table}
+
+
+
+%\hide{
+%\begin{table*}
+%	\centering
+%\begin{tabular}{c|c}
+%Notation & Explanation\\
+%\hline
+%$\flagset$ & intent flags, $\ntkflag, \ctpflag, \stpflag, \ctkflag, \mtkflag, \rtfflag, \tohflag$\\
+% $\frag$   & a set of fragments\\
+% $\vgr: \act \rightarrow \Nn^+$ &  {\container} function\\
+% $\actinstr$ & $\{\alpha(A, \phi) \mid \alpha \in  \{\startactivity, \finishstart\}, A \in \act, \phi \in \bool(\flagset)\}$\\
+% $\fraginstr $ & $\{\mu[O] \mid  \mu \in \{\opstack, \nopstack\}, O \in \ops\}$ \\
+% $\ops$ &  a finite set of \emph{macro-transactions} of the form $(\beta_1(F_1, i_1), \cdots, \beta_k(F_k, i_k))$\\
+% $V$ &  container\\
+% $S= [(A_1, \Theta_1), \cdots, (A_n, \Theta_n)]$ & task
+%\end{tabular}
+%\caption{A list of notations}
+%\end{table*}
+%}
+
+Let $\flagset=\{\ntkflag,\ndmflag,\mtkflag, \stpflag,\rtfflag,\ctpflag, \ctkflag,\pitflag,\nohflag,\tohflag\}$ denote the set of intent flags, $\bool(\flagset)$ denote the set of formulae $\phi = \bigwedge \limits_{F \in \flagset} \theta_F$, where $\theta_F = F$ or $\neg F$. For convenience, we use $\bot$ to denote $ \bigwedge \limits_{F \in \flagset} \neg F$. 
+
+\begin{definition}[Android Multitasking Stack System, \AMASS] \label{def:afsm}
+An {\AMASS} is a tuple 
+$$\Mm = (\act, A_0,\frag, \lmd, \aft, \vgr, \Delta),$$ where 
+\begin{itemize}
+\item $\act$ is a finite set of activities, and $A_0 \in \act$ is the main activity, let $m=|\act|$,
+\item $\frag$ is a finite set of fragments, 
+\item $\lmd : \act \rightarrow \{\standard,\singletop,\singletask,\singleinstance\}$ is the launch-mode function,
+%
+\item $\aft : \act \rightarrow [m]$ is the task-affinity function,
+%
+\item $\vgr: \act \rightarrow \Nn^*$ is the fragment {\container} function that assigns to each activity a finite sequence of mutually-distinct fragment {\container} identifiers,
+% 
+%\item $\vgr: \act \rightarrow 2^{\Nn}$ is the view-group function, 
+%
+\item $\Delta \subseteq (\act \cup \frag) \times ( \actinstr \cup \fraginstr)\cup\{\back\}$ is a finite set of transition rules. Here $\actinstr =$ 
+$$\{\alpha(A, \phi) \mid \alpha \in  \{\startactivity, \finishstart\}, A \in \act, \phi \in \bool(\flagset)\}$$ 
+and $\fraginstr =  \{\mu[T] \mid  \mu \in \{\opstack, \nopstack\}, T \in \ops\}$ where $\ops$ is a finite set of fragment transactions of the form $(\beta_1(F_1, i_1, x_1), \cdots, \beta_k(F_k, i_k, x_k))$ where for every $j \in [k]$, $\beta_j \in \{\ADD, \REP, \REM\}$, $F_j \in \frag$, $i_j \in \Nn$, and $x_j$ is a variable storing the identifiers of fragment instances.
+%$(\beta_1(F_1, i_1), \cdots, \beta_k(F_k, i_k))$ such that for each $j \in [k]$, $\beta_j \in \{\ADD,\REM, \REP\}$, $F_j \in \frag$, and $i_j \in \Nn$. 
+\end{itemize}
+%
+Moreover, we consider several sub-models of {\AMASS}, namely, \emph{activity-oriented} {\AMASS} ($\AOAMASS$) and \emph{fragment-oriented} {\AMASS} ($\FOAMASS$), where all the transition rules are on the activity-level and fragment-level respectively. More precisely, an $\AOAMASS$ (resp. $\FOAMASS$) is an {\AMASS} where all transitions are \emph{activity-oriented}, that is, $\Delta \subseteq \act \times \actinstr \cup \{\back\}$  (resp. \emph{fragment-oriented}, $\Delta \subseteq \frag \times \fraginstr \cup \{\back\}$).
+\end{definition}
+
+%
+For readability, we write a transition rule $(A, \alpha(B, \phi))\in \Delta$ as $A \xrightarrow{\alpha(\phi)} B$
+%$(A, \startactivity(B, \phi))$ as $A \xrightarrow{\startactivity} (B, \phi)$, similarly for $(A, \finishstart(B, \phi))$, and so on. Moreover, we write 
+and 
+$(A, \mu[T])\in \Delta$ as $A \xrightarrow{\mu} T$. 
+%We call $A$ as the \emph{source} of the transition rule. Similarly for the transition rules starting from $F$.
+Therefore, all the transitions in an $\AOAMASS$ (resp. $\FOAMASS$), except $\back$, are of the form $A \xrightarrow{\alpha(\phi)} B$ (resp. $A \xrightarrow{\mu} T$).
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\hide{
+%\begin{example}\label{exmp-running}
+%Let $\Mm = (\act, A_0, \frag,\vgr,\lmd,\aft,\Delta)$ be the {\AMASS} illustrated in Figure~\ref{fig-amass},
+%where 
+%\begin{itemize}
+%\item $\act = \{A_0, A_1, B_0,B_1\}$, the main activity is $A_0$, 
+%\item $\frag= \{F_0, F_1\}$, 
+%\item $\vgr(A_0) = (1)$, $\vgr(A_1) = \vgr(B_0) = \vgr(B_1)  = \epsilon$, 
+%\item $\lmd(A_0) = \lmd(A_1) = \lmd(B_0) = \lmd(B_1) = \standard$,
+%\item $\aft(A_0) = \aft(A_1)= 0$, $\aft(B_0) = \aft(B_1) = 1$, and
+%\item $\Delta$ comprises the rules
+%	$\tau_1=A_0 \xrightarrow{\startactivity} (A_1, \bot)$,
+%	$\tau_2=A_0 \xrightarrow{\startactivity} (B_0, \ntkflag)$,
+%	$\tau_3=A_0 \xrightarrow{\startactivity} (B_1, \ntkflag)$,
+%	$\tau_4=B_0 \xrightarrow{\startactivity} (B_1, \bot)$, 
+%	$\tau_5=B_1 \xrightarrow{\startactivity} (A_0, \ntkflag)$,
+%	$\tau_6=B_1 \xrightarrow{\startactivity} (A_1, \ntkflag \wedge \ctkflag)$,
+%	$\tau_7=A_0 \xrightarrow{\opstack} (\ADD(F_0,1))$,
+%	$\tau_8=F_0 \xrightarrow{\nopstack} (\ADD(F_1,1))$,
+%	$\tau_9=F_1 \xrightarrow{\opstack} (\REP(F_0,1))$.
+%%
+%%    $A_0 \xrightarrow{\startactivity} (B_0, \ntkflag)$,
+%%    $A_0 \xrightarrow{\startactivity} (B_1, \ntkflag)$,
+%%    $B_0 \xrightarrow{\startactivity} (B_1, \bot)$,
+%%    $B_1 \xrightarrow{\startactivity} (A_0, \ntkflag)$,
+%%    $A_0 \xrightarrow{\opstack} (\ADD(F_0,1))$,
+%%   and  $F_0 \xrightarrow{\nopstack} (\ADD(F_1,1))$.
+%\end{itemize}
+%\end{example}
+%}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%\begin{figure}[ht]
+%    \centering
+%    \includegraphics[scale=0.7]{amass-example.pdf}
+%    \caption{An example of \AMASS}
+%    \label{fig-amass}
+%\end{figure}
+
+%\begin{remark}
+%This choice is (partially) justified by the fact that in the 3000 mostly download GooglePlay apps, only 9 of them (0.3\%) contains the occurrences of this action.
+%\end{remark}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+%%%%%%%%%%%%%% Semantics of AMASS for Android 12.0 %%%%%%%%%%%
+
+
+\smallskip
+
+The rest of this section is devoted to the semantics of {{\AMASS}. We shall first define the semantics of {\AMASS} for Android 13.0, and consider the semantics for other versions later. 
+	
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Semantics of {\AMASS} for Android 13.0}\label{sec-amass-13}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+As the model of {\AMASS} involves both activities and fragments, its semantics is rather involved. In order to ease the understanding, we separate the concerns and define the formal semantics of {$\AOAMASS$} and {$\FOAMASS$} respectively. (The long and detailed definition of the formal semantics of {\AMASS} is presented in the appendix.)  
+
+
+%We shall first define the semantics of {\AMASS} for Android 12.0, and state the semantics for other versions later. 
+%\revision{In light of the complexity of semantics of {\AMASS} and that fragments and activities can be defined separately to some extent, we distinguish two subcases, i.e., Activity-based {\AMASS} and Fragment-based {\AMASS}. The complete semantics are defined in Appendix~\ref{app:semantic}.}
+%\revision{
+
+%%%%%%%%%%%%%% Semantics of AOAMASS %%%%%%%%%%%
+%%%%%%%%%%%%%% Semantics of AOAMASS %%%%%%%%%%%
+%%%%%%%%%%%%%% Semantics of AOAMASS %%%%%%%%%%%
+
+\input{aoamass_new.tex}
+
+
+\input{foamass.tex}
+
+
+\input{amass-other-versions.tex}
+
+
+\smallskip
+
+We have defined the semantics of {$\AMASS$} in this section. To go one step further, we would like to validate the semantics against the actual behaviors of Android apps w.r.t. the multitasking mechanism between activities and fragments. Moreover, we would like to do some static analysis of the behaviors of Android apps related to the multitasking mechanism between activities and fragments. To facilitate these two tasks, in the next two sections, we build {\AMASS} models out of APK files of Android apps and encode the reachability problem of {\AMASS} models into the model checking problem in the input format of nuXmv model checker \cite{nuXmv}. 
+
+
+

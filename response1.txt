@@ -1,0 +1,35 @@
+Reviewer 1
+
+Q1: I still have doubts on the claim from the authors about the multi-tasking mechanisms in Android. The authors indicate that all of the high-level multitasking is implemented via (relatively) lower-level inter-component interaction/communication. But, for different types of high-level multitasking mechanisms for different components, the low level implementation and modelling can be different. For example, the intent flags used for activities can be totally different from those used for starting Services. In addition, Android also supports other types of multi-threading such as AsyncTasks. However, in Section 2, the authors only use multi-tasking to refer to “activities and fragments, and the evolution of the back stack” ,which, I think, are only a type of multitasking on Android. I think the authors should better restrict the scope of this paper. Instead of claiming that they are formalizing the multitasking mechanism of Android, they should explicitly specify that they are formalizing multitasking between activities and fragments.
+
+Response: follow the reviewer's suggestions and change the title, introduction. 
+
+ 
+Reviewer 2
+
+Q1: I thank the authors for adding more details regarding the cross-version difference in the mentioned aspects. However, the current Section 2 is a bit unorganized. The authors should consider organize them into subsections or tables for better readability.  
+
+Response: We have organized the description of the intent flags into tables in Section 2 for better readability.
+
+Q1: Please add discussion on the limitation of using dynamic testing for model extraction, and clarify how this could affect the performance of ICCBot_{AMASS}. 
+
+Response: We have added the discussion on the limitation of using dynamic testing for model extraction in Section 4.
+
+Reviewer 3
+
+Q1: Although the authors claim to rewrite Section 3 completely, this section is still not understandable. As a consequence, the correctness of the developed formal semantics for Android system is still hard to judge. The authors' response "the precision/correctness of the model extraction is somehow not central to the goal of this paper" somehow sounds very strange to me.
+The presentation of the paper, especially those technical parts, is not much improved. (Some examples: Section 3.1 - transition relation, Semantics of AMASS𝐴𝐶𝑇,𝐼𝐹 pp15-19.)
+
+Response: In the current version, we omit the intent flag NOH for defining the semantics of AMASS𝐴𝐶𝑇,𝐼𝐹, and give an intuition of the semantics of AMASS𝐴𝐶𝑇,𝐼𝐹. Finally, we put the long definition of the semantics of AMASS𝐴𝐶𝑇,𝐼𝐹 in the appendix.
+
+Q2: The correctness of the proposed formal model is difficult to judge. The validation of the formal semantics in Section 6 is insufficient.
+
+Response: a trade-off between the cost and precision. already go beyond the state of the art. similar work ? Manual inspection of the source code + experiments
+
+Q3: The authors should discuss what the implications of their work in practice. The impact of this work is rather limited or at least not extensively discussed. What lessons should be learned from this study? What can the community benefit from this paper? Any suggestions for improvements for the practical development of Android systems?
+
+Response: We have added the discussion of the implications for the app developers and researchers in Section 9.
+
+Q4: The authors should also discuss whether the proposed formal model is still relevant for later Android versions.
+
+Response: We have extended the semantics of AMASS for the latest Android version, Android 13.

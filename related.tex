@@ -1,0 +1,70 @@
+%!TEX root = main.tex
+
+\noindent \textbf{Formalization of Android multitasking semantics.}
+In light of its central role in  analyzing Android apps, the multitasking mechanism between activities and fragments has been considered in literature. To best of our knowledge, this line of work was initiated in \cite{AN13}, where the concept of activity transition graphs (ATG) was proposed. ATGs are directed graphs where nodes are activities and edges describe the relationships that an activity can start the other. ATGs can be used for generating traces in GUI testing. An extension of ATGs, i.e., window transition graphs (WTGs) were proposed in \cite{YZWWYR15}. In WTGs, windows are assumed to be stored in one stack; nodes are windows that include not only activities, but also menus and dialogs; transitions represent a sequence of push/pop operations associated with sequences of callbacks. 
+ATGs were also extended in \cite{YWYZ17}, giving rise to the LATTE model, a finite-state machine model which stores the activities in a bounded-height stack as well as some state information transferred across activities. Moreover, in \cite{ZSX18}, activities were assumed to be stored into a stack and its contents were used as contexts for GUI testing and pointer analysis. In \cite{LWX18}, a tool called TDroid was developed to utilize the syntactic pattens on the launch modes, intent flags, and task affinities to detect the app switching attacks.
+All of the above work did not consider fragments which were addressed in \cite{CHGD18}, where activity fragment transition graphs (AFTG) were proposed and used for GUI testing. %AFTGs extend ATGs by taking fragments into consideration.
+%
+Furthermore, in \cite{LHR17,ChenHSWWY18,HCWWY19}, formal semantics for Android multitasking mechanism were proposed.
+% and used for the static analysis of Android apps.
+%
+%Despite the progress, it is fair to say that the understanding
+%of Android multitasking mechanism and its application in
+%Android app analysis and testing are still unsatisfactory. For
+%the former, 
+
+%The existing formal semantics is unfortunately far from complete.
+One serious drawback of the current formalization is that the activities are treated as
+an atomic object therein, while the internal structures (e.g.,
+fragments) were abstracted away. In this paper, we provide the first complete formal account 
+of the operational semantics, differentiating different versions of Android, and carry out validation ensuring its conformance to the actual behavior.  
+
+%This was indeed the case
+%in [Chen et al. 2018b; He et al. 2019; Lee et al. 2017]. 
+
+%\medskip
+\noindent\textbf{Static analysis. }
+%
+%Static analysis exploits techniques that parse program source code or bytecode, often traversing program paths to check some program properties. 
+Static analysis approaches have been applied to Android apps, where typical tasks include  %proposed for different tasks, including for 
+assessing the security of Android apps, detecting app clones, automating test cases generation, or %for 
+uncovering non-functional issues related to performance or energy \cite{LiBPRBOKT17}. There is a large body of work where in general the analysis techniques are still those which have been thoroughly considered in the static analysis of programs, e.g., control-flow analysis, data-flow analysis, and point-to analysis, but  are adapted to Android apps. 
+
+
+A specific purpose of static analysis which is the closest to this paper is to reveal security vulnerabilities, many of which are related to the ICC mechanism and its potential misuses such as component hijacking. For instance,  \cite{LuLWLJ12} applied reachability analysis on customized system dependence graphs to detect component hijacking vulnerabilities, and \cite{OcteauMJBBKT13, OcteauLDJM15} implemented the detection of 
+inter-component vulnerabilities. 
+%(i.e., gain unauthorized access to protected or private resources through exported components in vulnerable apps) 
+%or intent injection. %(i.e., manipulate user input data to execute code through it). 
+%For example, CHEX [8] detects potential component hijacking- based flows through reachability analysis on customized system dependence graphs. Epicc [9] and IC3 [39] are tools that imple- ment static analysis techniques for implementing detection sce- narios of inter-component vulnerabilities. Based on these studies, PCLeaks [38] goes one step further by performing sensitive data- flow analysis on top of component vulnerabilities, enabling it to not only know what is the issue but also to know what sensi- tive data will leak through that issue. Similarly to PCLeaks, Con- tentScope [40] detects sensitive data leaks focusing on Content Provider-based vulnerabilities in Android apps.
+We refer to \cite{LiBPRBOKT17} for a systematic literature review for the static analysis of Android apps.
+
+In terms of static analysis  with respect to the multitasking mechanism between activities and fragments, 
+the state-of-the-art analysis largely
+applied a syntactic approach. The underlying stack semantics of the multitasking mechanism  between activities and fragments is either ignored completely (\cite{AN13,LWX18,CHGD18}) or considered in a restricted form (e.g., single stack \cite{YZWWYR15}), or otherwise important features (e.g., task affinities or fragments) are skipped \cite{YZWWYR15,YWYZ17, ZSX18}.  
+
+\cite{LHR17}  develops a static analysis tool based on the operational semantics formalized therein, which can analyze  Android apps.  The tool extracts the necessary information (e.g., activity, intent flag)  and
+%produces a report of possible activity injections. Using the
+%activity information, intent data, and the activity activation
+%semantics, it 
+analyzes possible activity injection cases
+to detect activity injection attacks. We are however not aware of other formal approaches towards analysis of Android apps accounting for the multitasking mechanism between activities and fragments similar to what we present in the current paper. 
+
+%From a given Android apk archive, Activity Info. Extractor
+%builds information about the activities in the app; it disassembles the resource files of the app using apktool [15] and
+%extracts launchMode and taskAffinity of the activities
+%from the AndroidManifest.xml file. Also, CHA CallGraph
+%Builder takes the apk and constructs its call graph via Class
+%Hierarchy Analysis (CHA) [16], which is often less precise
+%than pointer analysis but much faster, since it analyzes only
+%types rather than values. Then, Intent Analyzer extracts intent
+%data that activate activities from the call graph. The intent
+%data contain the target activity names of the intent and the
+%set of intent flags added to the intent. Finally, Activity Injection
+%Detector takes the activity information with intent data, and
+%produces a report of possible activity injections. Using the
+%activity information, intent data, and the activity activation
+%semantics, it analyzes possible activity injection cases
+%to detect activity injection attacks.
+
+%\zhilin{More related work should be added} \tl{do we have more related work?}
+ 
