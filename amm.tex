@@ -27,6 +27,7 @@ We mention that, the Home screen comes to the foreground when a user presses the
  can contain other standard or singleTop activities in its task, a singleInstance activity does not contain any other
  activities in its task. It is the only activity in its task; if it starts another activity, that activity is assigned to a different task. 
 The task affinity attribute is of string data type and specifies to which task the activity prefers to belong. By default, all the activities from the same app have the same affinity, the package name of the app (i.e., all activities in the same app prefer to be in the same task). However, one can modify the default affinity of the activity. Android allows a great degree of flexibility: activities defined in different apps can share a task affinity whilst activities defined in the same app can be assigned with different task affinities.  
+
  
 Android supports inter-component communication via \emph{intents}. An intent is an asynchronous message that activates activities. 
 Android provides two types of intents, \emph{explicit} intents and \emph{implicit} intents. 
@@ -109,12 +110,14 @@ The other 13 intent flags are ignored, for various reasons as shown in Table~\re
     \label{tab-int-flag-ignore}
 \end{table}
 
-\jinlong{
-Moreover, after an activity call startActivity() or startActivityForResult() to start another activity, the caller activity could call finish() function, this function allows the caller activity to be finished immediately. 
-The \emph{real activity}\footnote{The name is inherited from the Android system.} of a task is the activity  which was pushed into the task as the bottom activity when the task is created. 
+Besides launch modes, task affinities, and intent flags, there are some other factors that may also affect the behaviors of the task stack. 
+When a caller activity calls startActivity() or startActivityForResult() to start a callee activity, the caller activity can also call the \emph{finish()} procedure so that when the callee activity is started, the caller activity is finished. 
+Moreover, the \emph{real activity}\footnote{The name is inherited from the Android system.} of a task also matters. The real activity of a task is the activity that was pushed into the task as the bottom activity when the task was created. 
 %Intuitively, $A_i$ is the activity which was pushed into the task---as the bottom activity---when the task $S_i$ was created. (Note that $A_i$ is not necessarily the current bottom activity of $S_i$.) 
-The real activity indeed affects the evolution of the task stack. For instance, if the real activity of some task is $B$ and the task is not the main task, then attempting to push an instance of $B$ to the task will not modify the task. 
-}
+If the real activity of a task is $B$ and the task is not the main task, then attempting to push an instance of $B$ to the task will not modify the task. 
+
+
+
 \hide{
 \begin{itemize}
 \item The following three flags are related to implicit intents, which we do not consider in this paper:\\
@@ -239,7 +242,7 @@ Related to fragments, \emph{view} is a basic building block of UI in Android. In
 %\tl{say fragment transaction, to be adpated}
 
 At runtime, an app can add, remove, replace fragments in response to user interaction. 
-\jinlong{The add (resp. remove) action will push (resp. pop) the fragment of a fragment container, but replace action will pop all fragments in the fragment container and push the fragment.}
+The add (resp. remove) action will push (resp. pop) a fragment into (resp. out of) a fragment container. The replace action will first remove all the fragments in a fragment container, then push a fragment into it.
 %\jinlong{These actions are called fragment actions, for example, an app can add (resp. remove) a fragment in the fragment stack via "add" (resp. "remove") action; it also can clear all fragments in the fragment stack and add a fragment into the fragment stack via "replace" action.}
 Multiple fragment actions may be involved in response to one user interaction. Typically, these fragment actions are grouped into \emph{fragment transactions}, where either all the fragment actions are executed,  or none of them is executed. 
 %Each set of fragment changes is called a fragment transaction. %, and you can specify what to do inside the transaction using the APIs provided by the FragmentTransaction class. You can 
@@ -269,23 +272,14 @@ It turns out that there are subtle differences between the multitasking mechanis
 %
 %Android supports inter-component communication via \emph{intents}. An intent is an asynchronous message that activates activities. Android provides 21 intent flags related to activities, but only part of them may govern activity activation. Intent flags are set by caller activities to declare how to activate target activities and are passed to startActivity() or startActivityForResult() as their arguments.
 \subsection{Motivating examples}
-We use two F-Droid apps com.quaap.launchtime (LaunchTime Homescreen)\footnote{available at https://github.com/quaap/LaunchTime/blob/master/} and org.janb.shoppinglist (ShoppingList)\footnote{available at https://github.com/GroundApps/ShoppingList/blob/master/} to illustrate the motivation of this work. 
-\subsubsection{LaunchTime Homescreen}
-The app LaunchTime Homescreen has two activities, MainActivity and SettingsActivity. From the source code of LaunchTime Homescreen in Figure~\ref{code-launchtime}, we can see that the launch mode of MainActivity is singleInstance and the launch mode of SettingsActivity is standard (the default mode). Moreover, MainActivity can start SettingsActivity by calling startActivity(settingsIntent) function in line 3942 of the MainActivity.java file, where the settingsIntent contains the intent flags FLAG\_ACTIVITY\_NEW\_TASK.
-SettingsActivity can start MainActivity by calling startActivity(main) function without any intent flags in line 142 of the SettingsActivity.java file , but after starting MainActivity, finish() will be called in line 144.
+%
+We use two simple apps from F-Droid, namely, LaunchTime Homescreen\footnote{available at https://github.com/quaap/LaunchTime/blob/master/} and ShoppingList\footnote{available at https://github.com/GroundApps/ShoppingList/blob/master/}, to motivate this work. 
+%
+\subsubsection{The ``LaunchTime Homescreen'' app}
+The ``LaunchTime Homescreen'' app has two activities, MainActivity and SettingsActivity. The snippet of the source code of the ``LaunchTime Homescreen'' app is shown in Figure~\ref{code-launchtime}. The launch modes of MainActivity and SettingsActivity are singleInstance and standard respectively. 
+In line 3942 of the MainActivity.java file (see Figure~\ref{code-launchtime}), MainActivity starts SettingsActivity by calling the function startActivity(settingsIntent), where the settingsIntent contains the intent flag FLAG\_ACTIVITY\_NEW\_TASK. 
+On the other hand, in line 142 of the SettingsActivity.java file (see Figure~\ref{code-launchtime}), SettingsActivity starts MainActivity by calling the function startActivity(main), where all the intent flags are set to be false. Moreover, in line 144 of the same file, finish() is called after MainActivity is started. That is, when MainActivity is started, SettingsActivity is finished. 
 
-% The ATG of com.quaap.launchtime is shown in Figure~\ref{fig:cmp-atg}, in which the Main and Settings states represent the MainActivity and SettingsActivity respectively. 
-Figure~\ref{fig:cmp-models} shows three models for the app LaunchTime Homescreen, Figure~\ref{fig:cmp-atg} is ATG, the first and simplest model of Android multitasking mechanism, Figure~\ref{fig:cmp-lhr} is the model proposed in \cite{LHR17}, and Figure~\ref{fig:cmp-amass} is AMASS.
-In these three models, the Main and Settings states represent the MainActivity and SettingsActivity respectively, and $\SIT$ (resp. $\STD$) in Figure~\ref{fig:cmp-lhr} and Figure~\ref{fig:cmp-amass} represents the launch mode of MainActivity (resp. SettingsActivity). Moreover, the edges in the models represent the relation between activities, $\ntkflag$ represents the intent flags FLAG\_ACTIVITY\_NEW\_TASK, $\finishstart$ represents the combination of startActivity() and finish().
-The differences among the three models are that, 1) ATG only consider the relation between activities, ignores the launch modes of activity, the intent flags when starting activity and finish() function, 2) the model of \cite{LHR17} ignores the finish() function.
-
-In the sequel, we consider the task unboundedness problem of these models, that is deciding whether the number of activities in some task will be unbounded. 
-\begin{itemize}
-	\item In ATG, MainActivity and SettingsActivity will be in a task, MainActivity (resp. SettingsActivity) will be pushed into task by the lower (resp. upper) edge. Therefore there exists a task is unbounded in ATG.
-	\item In the model of \cite{LHR17}, MainActivity and SettingsActivity will be placed in two different tasks, since the launch mode of  MainActivity is singleInstance, the number of MainActivity is at most 1. However each time the upper edge is called, SettingsActivity will be pushed into a task, leading to the task unboundedness.
-	\item In AMASS, we assume that the label of lower edge is $\startactivity(\bot)$ first, since the real activity of the task containing SettingsActivity is SettingsActivity, SettingsActivity will not be pushed into the task which contains SettingsActivity when the upper edge is called. Therefore, even though finish() function is ignored in AMASS, the task of SettingsActivitys is still bounded. If we do not consider the real activity, only consider the finish() function, the task of SettingsActivitys is still bounded, since when the lower edge is called, SettingsActivity will be finished.
-\end{itemize}
-Therefore, we can see that ATG and the model of \cite{LHR17} will report the task unboundedness when analyzing the app LaunchTime Homescreen, but either the number of MainActivity or SettingsActivity will be bounded when the app LaunchTime Homescreen is running.
 \begin{figure}[htbp]
     \centering
     \begin{tabular*}{\linewidth}{l}
@@ -331,6 +325,25 @@ Therefore, we can see that ATG and the model of \cite{LHR17} will report the tas
     \label{code-launchtime}
     \end{figure}
 
+% The ATG of com.quaap.launchtime is shown in Figure~\ref{fig:cmp-atg}, in which the Main and Settings states represent the MainActivity and SettingsActivity respectively. 
+
+Let us consider the task unboundedness problem, that is, whether there is a task where the number of activities in the task can be unbounded, that is, arbitrarily large. In the sequel, we show how the {\AMASS} model provides more precise information than the other models so that we can detect the task unboundedness of  the ``LaunchTime Homescreen'' app more accurately. 
+\begin{itemize}
+\item If we use the activity transition graph (ATG) to model the ``LaunchTime Homescreen'' app, then the resulting ATG is just a cycle with two vertices MainActivity and SettingsActivity. Then according to the ATG model, we may conclude that the task can become unbounded, since these two activities can start each other indefinitely. 
+%
+\item If we use the model in \cite{LHR17}, then the launch modes and intent flags are added as the labels of vertices and edges respectively in the ATG model. That is, the vertices are MainActivity(singleInstance) and SettingsActivity(standard), where the vertex labels (launch models) are put in brackets, and the edge from MainActivity to SettingActivity is labeled by start(NTK) (where start and NTK are the abbreviations of startActivity and FLAG\_ACTIVITY\_NEW\_TASK respectively) and the edge from SettingActivity to MainActivity is labeled by start($\bot$) (where $\bot$ denotes the fact that all the intent flags are false). In this case, compared to the ATG model, more information is available. For instance, we know that there are at most two tasks, one task holding a unique instance of MainActivity (since its launch mode is singleInstance), and the other task holding the instances of SettingsActivity. Nevertheless, we may still conclude that the task where the instances of SettingsActivity belong to can become unbounded, since SettingsActivity can be started by MainActivity for an unbounded number of times. 
+%
+\item If we use the {\AMASS} model in this paper, then in addition to the launch modes and intent flags, we can also model the finish() procedure. That is, the edge from SettingsActivity to MainActivity is labeled by finishStart($\bot$), where finishStart represents the fact that finish() is called after startActivity() is called. In this case, each time when MainActivity is started by SettingsActivity, SettingsActivity is finished simultaneously. As a result, the task holding SettingsActivity contains at most one instance of SettingsActivity. We conclude that the ``LaunchTime Homescreen'' app does not suffer from the task unboundedness problem actually. 
+\end{itemize}
+From this example, we can see that the {\AMASS} model contains more information about activities than the well-known ATG model and the model in \cite{LHR17}, thus enables a more accurate analysis of the task unboundedness problem. 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\hide{
+Figure~\ref{fig:cmp-models} shows three models for the app LaunchTime Homescreen, Figure~\ref{fig:cmp-atg} is ATG, the first and simplest model of Android multitasking mechanism, Figure~\ref{fig:cmp-lhr} is the model proposed in \cite{LHR17}, and Figure~\ref{fig:cmp-amass} is AMASS.
+In these three models, the Main and Settings states represent the MainActivity and SettingsActivity respectively, and $\SIT$ (resp. $\STD$) in Figure~\ref{fig:cmp-lhr} and Figure~\ref{fig:cmp-amass} represents the launch mode of MainActivity (resp. SettingsActivity). Moreover, the edges in the models represent the relation between activities, $\ntkflag$ represents the intent flags FLAG\_ACTIVITY\_NEW\_TASK, $\finishstart$ represents the combination of startActivity() and finish().
+The differences among the three models are that, 1) ATG only consider the relation between activities, ignores the launch modes of activity, the intent flags when starting activity and finish() function, 2) the model of \cite{LHR17} ignores the finish() function.
+
     \begin{figure}[htbp]
         \subfigure[ATG] {
         \begin{minipage}[t]{0.31\linewidth}
@@ -356,6 +369,20 @@ Therefore, we can see that ATG and the model of \cite{LHR17} will report the tas
         \caption{Different models for the app LaunchTime Homescreen }
         \label{fig:cmp-models}
     \end{figure}
+
+In the sequel, we consider the task unboundedness problem of these models, that is deciding whether the number of activities in some task will be unbounded. 
+\begin{itemize}
+	\item In ATG, MainActivity and SettingsActivity will be in a task, MainActivity (resp. SettingsActivity) will be pushed into task by the lower (resp. upper) edge. Therefore there exists a task is unbounded in ATG.
+	\item In the model of \cite{LHR17}, MainActivity and SettingsActivity will be placed in two different tasks, since the launch mode of  MainActivity is singleInstance, the number of MainActivity is at most 1. However each time the upper edge is called, SettingsActivity will be pushed into a task, leading to the task unboundedness.
+	\item In AMASS, we assume that the label of lower edge is $\startactivity(\bot)$ first, since the real activity of the task containing SettingsActivity is SettingsActivity, SettingsActivity will not be pushed into the task which contains SettingsActivity when the upper edge is called. Therefore, even though finish() function is ignored in AMASS, the task of SettingsActivitys is still bounded. If we do not consider the real activity, only consider the finish() function, the task of SettingsActivitys is still bounded, since when the lower edge is called, SettingsActivity will be finished.
+\end{itemize}
+Therefore, we can see that ATG and the model of \cite{LHR17} will report the task unboundedness when analyzing the app LaunchTime Homescreen, but either the number of MainActivity or SettingsActivity will be bounded when the app LaunchTime Homescreen is running.
+}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%
 \subsubsection{ShoppingList}
 The app ShoppingList has three Fragments, ErrorFragment, ShoppingListFragment and CacheListFragment. From the source code of ShoppingList in Figure~\ref{code-shoplist}, we can see that ErrorFragment can start ShoppingListFragment (resp. CacheListFragment) via replace() function in line 69 (resp. 75) of the ErrorFragment.java file. ShoppingListFragment can start ErrorFragment via replace() function in line 392 of the ShoppingListFragment file. 
 
