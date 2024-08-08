@@ -96,8 +96,8 @@ We address these shortcomings in the current paper. %This motivates the followin
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \medskip
 \noindent\emph{Main contributions.} In this paper, we make the following contributions. %aiming at resolving the research question, we make the following contributions: 
-\begin{itemize}[leftmargin=*]
-\item We introduce a new model, Android multitasking stack machine (\AMASS), to define the formal semantics of the multitasking mechanism between activities and fragments. {\AMASS} covers all the important multitasking features (e.g., task affinities and fragments) and provides, to best our knowledge, insofar the most comprehensive formal account of the Android multitasking mechanism between activities and fragments. Moreover, We validate the formal semantics of {\AMASS} models against the actual behavior of  Android apps by designing a special-purpose app and doing large-scale experiments with the app. 
+\begin{itemize}
+\item We introduce a new model, Android multitasking stack machine (\AMASS), to define the formal semantics of the multitasking mechanism between activities and fragments. {\AMASS} covers all the important multitasking features (e.g., task affinities and fragments) and provides, to the best of our knowledge, insofar the most comprehensive formal account of the Android multitasking mechanism between activities and fragments. Moreover, We validate the formal semantics of {\AMASS} models against the actual behavior of  Android apps by designing a special-purpose app and doing large-scale experiments with the app. 
 %
 \item We harness the semantics to design novel algorithms for static analysis of the abnormal behaviors of task unboundedness and fragment-container unboundedness. %, providing a higher testing coverage and analysis precision. 
 
@@ -115,7 +115,9 @@ The results show that TaskDroid can detect the task/fragment-container unbounded
 \medskip
  
 \noindent\emph{Structure.} The rest of the paper is organized as follows. 
-Section~\ref{sec:amm} gives an informal introduction to Android multitasking mechanism between activities and fragments. Section~\ref{sec:amass} introduces the model {\AMASS} and formalization of the multitasking mechanism  between activities and fragments. Section~\ref{sec:apk2amass} shows how to extract {\AMASS} models out of Android APK files. Section~\ref{sec:amass2fsm} describes how to encode the semantics of the {\AMASS} models into the reachability problem of finite state machines  that can be tackled by the symbolic model checker nuXmv, if the stack heights are assumed to be bounded by a constant. Section~\ref{sec:validation} is devoted to the validation of the formal semantics of {\AMASS} models against the actual behaviors of Android apps. 
+Section~\ref{sec:amm} gives an informal introduction to Android multitasking mechanism between activities and fragments. 
+Section~\ref{sec-motiv-exmp} motivates this paper with two open-source apps from F-Droid. 
+Section~\ref{sec:amass} introduces the {\AMASS} model and formalization of the multitasking mechanism  between activities and fragments. Section~\ref{sec:apk2amass} shows how to extract {\AMASS} models out of Android APK files. Section~\ref{sec:amass2fsm} describes how to encode the semantics of the {\AMASS} models into the reachability problem of finite state machines  that can be tackled by the symbolic model checker nuXmv, if the stack heights are assumed to be bounded by a constant. Section~\ref{sec:validation} is devoted to the validation of the formal semantics of {\AMASS} models against the actual behaviors of Android apps. 
 Section~\ref{sec:static} presents the static analysis algorithms for the task/fragment-container unboundedness problems. 
 Section~\ref{sec:eva} describes the implementation of the static analysis tool, TaskDroid, the benchmarks, and the experiments for the evaluation of TaskDroid. %The related work is discussed in Section~\ref{sec:related}.
 The paper is concluded in Section~\ref{sec:conc}. 

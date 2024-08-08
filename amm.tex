@@ -271,9 +271,11 @@ It turns out that there are subtle differences between the multitasking mechanis
 %The task affinity attribute specifies to which task the activity prefers to belong. By default, all the activities from the same app have the same affinity (i.e., all activities in the same app prefer to be in the same task). However, one can modify the default affinity of the activity. Android allows a great degree of flexibility: activities defined in different apps can share a task affinity whilst activities defined in the same app can be assigned with different task affinities.  
 %
 %Android supports inter-component communication via \emph{intents}. An intent is an asynchronous message that activates activities. Android provides 21 intent flags related to activities, but only part of them may govern activity activation. Intent flags are set by caller activities to declare how to activate target activities and are passed to startActivity() or startActivityForResult() as their arguments.
-\subsection{Motivating examples}
+
+%%%% In this section, we use two examples to motivate this paper. 
+\section{Motivating examples}\label{sec-motiv-exmp}
 %
-We use two simple apps from F-Droid, namely, LaunchTime Homescreen\footnote{available at https://github.com/quaap/LaunchTime/blob/master/} and ShoppingList\footnote{available at https://github.com/GroundApps/ShoppingList/blob/master/}, to motivate this work. 
+We use two simple apps from F-Droid, namely, ``LaunchTime Homescreen''\footnote{available at https://github.com/quaap/LaunchTime/blob/master/} and ``ShoppingList''\footnote{available at https://github.com/GroundApps/ShoppingList/blob/master/}, to motivate this paper. We use the two examples to demonstrate that a model of the Android multitasking mechanism where the various factors related to activities, including launch modes, task affinities, intent flags, the finish() procedure, and the fragments, are taken into account, enables a more accurate static analysis of Android apps.  
 %
 \subsubsection{The ``LaunchTime Homescreen'' app}
 The ``LaunchTime Homescreen'' app has two activities, MainActivity and SettingsActivity. The snippet of the source code of the ``LaunchTime Homescreen'' app is shown in Figure~\ref{code-launchtime}. The launch modes of MainActivity and SettingsActivity are singleInstance and standard respectively. 
@@ -321,7 +323,7 @@ On the other hand, in line 142 of the SettingsActivity.java file (see Figure~\re
     147     }
     \end{lstlisting}
     \end{tabular*}
-    \caption{Source code of the F-Droid app LaunchTime Homescreen}
+    \caption{Source code of the F-Droid app ``LaunchTime Homescreen''}
     \label{code-launchtime}
     \end{figure}
 
@@ -331,11 +333,11 @@ Let us consider the task unboundedness problem, that is, whether there is a task
 \begin{itemize}
 \item If we use the activity transition graph (ATG) to model the ``LaunchTime Homescreen'' app, then the resulting ATG is just a cycle with two vertices MainActivity and SettingsActivity. Then according to the ATG model, we may conclude that the task can become unbounded, since these two activities can start each other indefinitely. 
 %
-\item If we use the model in \cite{LHR17}, then the launch modes and intent flags are added as the labels of vertices and edges respectively in the ATG model. That is, the vertices are MainActivity(singleInstance) and SettingsActivity(standard), where the vertex labels (launch models) are put in brackets, and the edge from MainActivity to SettingActivity is labeled by start(NTK) (where start and NTK are the abbreviations of startActivity and FLAG\_ACTIVITY\_NEW\_TASK respectively) and the edge from SettingActivity to MainActivity is labeled by start($\bot$) (where $\bot$ denotes the fact that all the intent flags are false). In this case, compared to the ATG model, more information is available. For instance, we know that there are at most two tasks, one task holding a unique instance of MainActivity (since its launch mode is singleInstance), and the other task holding the instances of SettingsActivity. Nevertheless, we may still conclude that the task where the instances of SettingsActivity belong to can become unbounded, since SettingsActivity can be started by MainActivity for an unbounded number of times. 
+\item If we use the models where the launch modes, task affinities, and intent flags are taken into account, e.g. that in \cite{LHR17}, then the launch modes and intent flags are added as the labels of vertices and edges respectively in the ATG model. That is, the vertices are MainActivity(singleInstance) and SettingsActivity(standard), where the vertex labels (launch models) are put in brackets, and the edge from MainActivity to SettingActivity is labeled by start(NTK) (where start and NTK are the abbreviations of startActivity and FLAG\_ACTIVITY\_NEW\_TASK respectively) and the edge from SettingActivity to MainActivity is labeled by start($\bot$) (where $\bot$ denotes the fact that all the intent flags are false). In this case, compared to the ATG model, more information is available. For instance, we know that there are at most two tasks, one task holding a unique instance of MainActivity (since its launch mode is singleInstance), and the other task holding the instances of SettingsActivity. Nevertheless, we may still conclude that the task where the instances of SettingsActivity belong to can become unbounded, since SettingsActivity can be started by MainActivity for an unbounded number of times. 
 %
 \item If we use the {\AMASS} model in this paper, then in addition to the launch modes and intent flags, we can also model the finish() procedure. That is, the edge from SettingsActivity to MainActivity is labeled by finishStart($\bot$), where finishStart represents the fact that finish() is called after startActivity() is called. In this case, each time when MainActivity is started by SettingsActivity, SettingsActivity is finished simultaneously. As a result, the task holding SettingsActivity contains at most one instance of SettingsActivity. We conclude that the ``LaunchTime Homescreen'' app does not suffer from the task unboundedness problem actually. 
 \end{itemize}
-From this example, we can see that the {\AMASS} model contains more information about activities than the well-known ATG model and the model in \cite{LHR17}, thus enables a more accurate analysis of the task unboundedness problem. 
+From this example, we can see that the {\AMASS} model contains more precise information about activities than the well-known ATG model as well as the others models in the literature e.g. that in \cite{LHR17}, thus it enables a more accurate analysis of the task unboundedness problem. 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -381,10 +383,11 @@ Therefore, we can see that ATG and the model of \cite{LHR17} will report the tas
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\zhilin{stopped here}
 
 %
 \subsubsection{ShoppingList}
-The app ShoppingList has three Fragments, ErrorFragment, ShoppingListFragment and CacheListFragment. From the source code of ShoppingList in Figure~\ref{code-shoplist}, we can see that ErrorFragment can start ShoppingListFragment (resp. CacheListFragment) via replace() function in line 69 (resp. 75) of the ErrorFragment.java file. ShoppingListFragment can start ErrorFragment via replace() function in line 392 of the ShoppingListFragment file. 
+The ``ShoppingList'' app comprises one activity, which three Fragments, ErrorFragment, ShoppingListFragment and CacheListFragment. From the source code of ShoppingList in Figure~\ref{code-shoplist}, we can see that ErrorFragment can start ShoppingListFragment (resp. CacheListFragment) via replace() function in line 69 (resp. 75) of the ErrorFragment.java file. ShoppingListFragment can start ErrorFragment via replace() function in line 392 of the ShoppingListFragment file. 
 
 Figure~\ref{fig:cmp-models-frg} shows two models for the app ShoppingList, Figure~\ref{fig:cmp-aftg} is AFTG and Figure~\ref{fig:cmp-amass-frg} is AMASS. 
 In these two models, the Error, ShoppingList and CacheList states represent the ErrorFragment, ShoppingListFragment and CacheListFragment respectively, the edges represent the relation between fragments. Moreover the label $\REP$ of the edge in Figure~\ref{fig:cmp-amass-frg} represents the function replace(). 
@@ -432,7 +435,7 @@ Therefore, we can see that AFTG will report the fragment stack unboundedness whe
 
     \end{lstlisting}
     \end{tabular*}
-    \caption{Source code of the F-Droid app ShoppingList}
+    \caption{Source code of the F-Droid app ``ShoppingList''}
     \label{code-shoplist}
     \end{figure}
 
