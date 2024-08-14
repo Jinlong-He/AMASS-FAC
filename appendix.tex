@@ -2733,9 +2733,14 @@ The task allocation mechanism of Android 6.0 has nothing to do with the real act
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\newpage
-\section{The source code of Android OS}\label{sec:souce-code}
-\begin{figure}[H]
+
+\section{Auditing the source code of Android OS}\label{app:code-audit}
+
+In this section, we audit the source code of Android OS for $\AOAMASS$ and $\FOAMASS$.
+
+\subsection{Auditing the source code for $\AOAMASS$}\label{app:code-audit-aomass}
+
+\begin{figure}[htbp]
 \centering
 \begin{tabular*}{\linewidth}{l}
 \begin{lstlisting}
@@ -2784,7 +2789,24 @@ The task allocation mechanism of Android 6.0 has nothing to do with the real act
 \label{code-startActivityInner}
 \end{figure}
 
-\begin{figure}[H]
+
+Let us have a closer look at the source code of the procedures called directly or indirectly by startActivityInner(). 
+\begin{itemize}
+\item From the source code in line 2550 of the file activityStarter.java (see Figure~\ref{code-startActivityInner}), the procedure computeLaunchingTaskFlags() computes the intent flags implied by the launch modes of the starting and started activities. 
+%
+\item From the source code in line 2678 of the file activityStarter.java (see Figure~\ref{code-getReusableTask}), the procedure getReusableTask() calls findTask() to compute a reusable task to put the started activity, when either the intent flag FLAG\_ACTIVITY\_NEW\_TASK is set to true and the flag FLAG\_ACTIVITY\_MULTIPLE\_TASK is set to false, or the launch modes of the started activity is singleInstance or singleTask.
+\begin{itemize}
+\item In line 2301 of the file RootWindowContainer.java (see Figure~\ref{code-getReusableTask}), findTask() calls process(), which then calls forAllLeafTasks(this) in line 338 of the file  RootWindowContainer.java, and in the procedure forAllLeafTasks(), test(this) is called in line 3221 of the file Task.java. 
+%
+\item In line 394 of the file RootWindowContainer.java (see Figure~\ref{code-getReusableTask}), the procedure test(Task $task$) first checks whether the real activity of $task$ matches the started activity. Otherwise, in line 401, it checks whether the affinity of $task$ matches the task affinity of the started activity. Therefore, from the source code of the procedure test(), we confirm that \emph{the task allocation mechanism defined in the semantics of $\AOAMASS$ in Section~\ref{sec:aoamass} matches its actual implementation in Android OS}. 
+\end{itemize}
+%
+\item When getReusableTask() does not find a task, computeTargetTask() (see line 1880 of Figure~\ref{code-getReusableTask}) will be called to see whether the top task in the task stack can be used to put the started activity. If the answer is yes, then computeTargetTask() returns the top task. 
+%
+\item If either getReusableTask() or computeTargetTask() finds an existing task to put the started activity, then recycleTask() (see line 2037 of of Figure~\ref{code-recycle-set-NewTask}) is called to prepare the task to be reused for this launch, where complyActivityFlags() is called to comply with the specified intent flags. 
+%
+
+\begin{figure}[htbp]
 \centering
 \begin{tabular*}{\linewidth}{l}
 \begin{lstlisting}
@@ -2853,7 +2875,35 @@ The task allocation mechanism of Android 6.0 has nothing to do with the real act
 \caption{Source code of ActivityStarter.getReusableTask(), RootWindowContainer.findTask(), RootWindowContainer.process(), Task.forAllLeafTasks(), and RootWindowContainer.test()}\label{code-getReusableTask}
 \end{figure}
 
-\begin{figure}[H]
+
+From the source code of complyActivityFlags() (see line 2182 of ActivityStarter.java in Figure~\ref{code-getReusableTask}), we can see that it deals with the intent flags in the following way. 
+\begin{itemize}
+\item In line 2191, if the intent flags FLAG\_ACTIVITY\_NEW\_TASK and FLAG\_ACTIVITY\_CLEAR\_TASK are both set to true, then complyActivityFlags() calls the procedure performClearTaskForReuse() in line 2199 to clear all activities in the task, and sets the Boolean variable $mAddingToTask$ to true in line 2201, so that the started activity will be added into the target task when the procedure addOrReparentStartingActivity() is called.
+%
+\item Otherwise, that is, FLAG\_ACTIVITY\_NEW\_TASK or FLAG\_ACTIVITY\_CLEAR\_TASK is set to false, then complyActivityFlags() performs the following operations. 
+\begin{itemize}
+\item In line 2203, if FLAG\_ACTIVITY\_CLEAR\_TOP is set to true, then complyActivityFlags() calls the procedure performClearTop() in line 2211 to clear all the activities on top of the started activity.
+%
+\item In line 2245, if FLAG\_ACTIVITY\_CLEAR\_TOP is set to false and FLAG\_ACTIVITY\_REORDER\_TO\_FRONT is set to true, then complyActivityFlags() calls the procedure moveActivityToFront() in line 2255 to move the started activity to the top of the task.
+%
+\item In line 2271, if FLAG\_ACTIVITY\_CLEAR\_TOP and FLAG\_ACTIVITY\_REORDER\_TO\_FRONT are both set to false, moreover, the real activity of the target task is the same as the started activity, then the content of the target task will be not changed. 
+%
+\item  In line 2275, if FLAG\_ACTIVITY\_CLEAR\_TOP and FLAG\_ACTIVITY\_REORDER\_TO\_FRONT are both set to false, and FLAG\_ACTIVITY\_SINGLE\_TOP is set to true, moreover, the top activity of the target task is the same as the started activity, then the content of the target task will not be changed. 
+%
+\item In line 2291, if none of the aforementioned situations happens, then the Boolean variable $mAddingToTask$ is set to true in line 2292, so that the started activity will be added into the target task when the procedure addOrReparentStartingActivity() is called. 
+\end{itemize}
+\end{itemize}
+Therefore, we confirm that \emph{the way of dealing with the intent flags in the semantics of $\AOAMASS$ in Section~\ref{sec:aoamass} is consistent with source code of complyActivityFlags()}. 
+%
+\item If neither getReusableTask() nor computeTargetTask() finds an existing task, then setNewTask() (see line 2842 of the file ActivityStarter.java in Figure~\ref{code-recycle-set-NewTask}) is called to start a new task.  Moreover, in line 2844, setNewTask() calls reuseOrCreateTask() to create a new task. From the source code of reuseOrCreateTask() as illustrated in Figure~\ref{code-reuseOrCreateTask}, the procedure reuseOrCreateTask() creates a new task in line 5959. Note that since the condition canReuseAsLeafTask() matters only when multi-screen mode is enabled, we ignore it in this work. As a result, in the single-screen mode, reuseOrCreateTask() always creates a new task. 
+%
+\item From the source code of the procedure addOrReparentStartingActivity() in Figure~\ref{code-recycle-set-NewTask}, the started activity is added to the target task by calling addChild() in line 2910. 
+\end{itemize}
+
+In summary, after auditing the Android source code for starting an activity, we confirm that the semantics of $\AOAMASS$ is consistent with its actual implementation in Android OS. In particular, the task allocation mechanism and the intent flags in the semantics conform to the source code in Android OS. 
+
+
+\begin{figure}[htbp]
 \centering
 \begin{tabular*}{\linewidth}{l}
 \begin{lstlisting}
@@ -2927,7 +2977,7 @@ The task allocation mechanism of Android 6.0 has nothing to do with the real act
 \end{figure}
 
 
-\begin{figure}[H]
+\begin{figure}[htbp]
 \centering
 \begin{tabular*}{\linewidth}{l}
 \begin{lstlisting}
@@ -2953,8 +3003,28 @@ The task allocation mechanism of Android 6.0 has nothing to do with the real act
 \end{figure}
 
 
+\subsection{Auditing the source code for $\FOAMASS$}\label{app:code-audit-fomass}
 
-\begin{figure}[H]
+
+%The source codes of the procedure executeOpsTogether() as well as those called by it directly or indirectly are illustrated in Figure~\ref{code-executeOpsTogether}--\ref{code-executeOps}.
+
+From the source code in Figure~\ref{code-executeOpsTogether}, the procedure executeOpsTogether() executes multiple fragment transactions stored in $records$ together. At first, for each $record$ in $records$, it either calls expandOps() or trackAddedFragmentsInPop() to update the fragments in $added$ and transforms each ``replace'' action of $record$ into a sequence of ``add'' and ``remove'' actions. The actual executions of these fragment transactions are fulfilled by calling executeOps() in line 2205. 
+
+The procedure expandOps() expands the actions in a fragment transaction by transforming each ``replace'' action into a sequence of ``add'' and ``remove'' actions. 
+From the source code of expandOps() (cf.\ Figure~\ref{code-executeOpsTogether}), when $op$ with $op.cmd$ = OP\_REPLACE is processed, a sequence of ``remove'' actions followed by an ``add'' action is added to mOps as follows. For each fragment in the current fragment container (that is, the fragment in $added$ such that $old.mContainerId == containerId$), a ``remove'' action is added (line 932). Finally, $op.cmd$ is changed from  OP\_REPLACE to OP\_ADD (line 942). 
+Therefore, we confirm that \emph{the way of dealing with REP actions in the semantics of $\FOAMASS$ in Section~\ref{sec-foamass} is consistent with the source code of expandOps()}. 
+
+
+
+When committing a fragment transaction, FragmentManager.executeOps() calls BackStackRecord.executeOps(). From the source code of BackStackRecord.executeOps() in Figure~\ref{code-executeOps} (line 759-809), each action in $mOps$ is executed by adding a fragment to or removing a fragment from the corresponding fragment container. Evidently, \emph{the execution of fragment actions as defined in the semantics of $\FOAMASS$ in Section~\ref{sec-foamass} is consistent with the source code of BackStackRecord.executeOps()}.
+
+When popping a fragment transaction, executeOpsTogether() calls trackAddedFragmentsInPop().  
+From the source code of trackAddedFragmentsInPop() in Figure~\ref{code-executeOpsTogether}, the fragments in $added$ are updated by revoking all ``add'' or ``remove'' actions in $mOps$ (i.e. all the actions in the current fragment transaction stack). Note that $added$ is a temporary data structure used for expanding ``replace'' actions and is different from the fragment stacks. The fragment stacks are updated by calling BackStackRecord.executePopOps() in Figure~\ref{code-executeOps}, where for each $op$ in $mOPs$, if $op.cmd$=OP\_ADD (resp. OP\_REMOVE), $op.fragment$ is removed from $mManager$ (resp. added to $mManager$). Therefore, we confirm that \emph{the way of revoking fragment transactions in the semantics of $\FOAMASS$ in Section~\ref{sec-foamass} is consistent with the source code of trackAddedFragmentsInPop()}. 
+
+
+
+
+\begin{figure}[htbp]
 \centering
 \begin{tabular*}{\linewidth}{l}
 \begin{lstlisting}
@@ -3023,7 +3093,7 @@ The task allocation mechanism of Android 6.0 has nothing to do with the real act
 \end{figure}
 
 
-\begin{figure}[H]
+\begin{figure}[htbp]
 \centering
 \begin{tabular*}{\linewidth}{l}
 \begin{lstlisting}

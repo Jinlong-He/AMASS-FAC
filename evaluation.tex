@@ -1,7 +1,7 @@
 %!TEX root = main.tex
 
 In this section,  we implement the static analysis algorithms proposed in the previous section, giving rise to %develop 
-a tool {\tool}\footnote{available at https://github.com/Jinlong-He/TaskDroid}. Moreover, we evaluate the performance of {\tool} via extensive experiments on 
+a tool {\tool}\footnote{available at https://github.com/Jinlong-He/TaskDroid}. Moreover, we evaluate the performance of {\tool} via extensive experiments 
 on 8,887 open-source and commercial Android apps.  
 
 \subsection{Implementation}\label{sec:impl}
@@ -376,7 +376,10 @@ The information of these apps can be found in  Appendix~\ref{app:table}, Table~\
 %\end{center}   
 %\end{table*}
 
-\jinlong{We use cross-verification method involving 4 individuals to check manually} on a virtual machine (4-core CPU, 2G RAM with Android 13.0) whether these 100 apps are indeed task/fragment-container unbounded by verifying whether the witness cycles reported by {\tool} are executable. The results are summarized in Table~\ref{tab:man-taskbound}.
+We manually check on a virtual machine (4-core CPU, 2G RAM with Android 13.0) whether these 100 apps are indeed task/fragment-container unbounded by verifying whether the witness cycles reported by {\tool} are executable. To ensure the reliability of the manual checking, we apply the cross verification method and ask 4 individuals to fulfill the manual checking and each of them checks all the 100 apps. 
+The results are summarized in Table~\ref{tab:man-taskbound}.
+
+%We use cross-verification method involving 4 individuals to check manually
 
 \begin{table}[htbp]   
 	\begin{center}   
@@ -596,9 +599,16 @@ we select 9 apps from GooglePlay with more than 100,000 downloads, including wel
 	\end{center}   
 \end{table}
 
-\jinlong{Moreover, to highlight the relationship between abnormal behaviors and unbounded apps, we use Monkey\footnote{https://developer.android.com/studio/test/other-testing-tools/monkey} tool to randomly click in the above 74 apps from Table~\ref{tab:threat-fd-task}~--~\ref{tab:threatpop}. We set the click time as 1s in Monkey tool, which is the same as TaskDroid. The results are shown in Figure~\ref{fig:cmp-monkey}, in the same execution time, TaskDroid(resp. Monkey) reports 27(resp. 5) apps ending up with app crash, 10(resp. 3) apps ending up with app restart and 37(resp. 4) apps ending up with rebooting of device, only $16\%$ apps end up with abnormal behaviors when using Monkey tool.
-These suggest that task unbounded and fragment-container unbounded apps can be potentially harmful to
-the Android system, highlighting the importance of such an analysis.  }
+The crashes and reboots of mobile applications can be caused by a variety of reasons, and it is common for mobile apps to experience such issues. 
+The authors have not demonstrated a causal link between the observed crashes and the task unbounded and fragment-container unbounded conditions through code analysis or other technical proof. Consequently, the conclusion drawn lacks a solid foundation and can be misleading. It is crucial for the authors to provide a more rigorous analysis to substantiate their claims regarding the potential harm of such vulnerabilities.
+
+Finally, considering the fact that the crashes and reboots of mobile applications can be caused by a variety of reasons, and it is common for mobile apps to experience such issues, in order to demonstrate a causal link between the crashes and task unboundedness and fragment-container unboundedness, we use the Monkey tool\footnote{https://developer.android.com/studio/test/other-testing-tools/monkey} to stress-test the 74 apps in Table~\ref{tab:threat-fd-task}~--~\ref{tab:threatpop}. We set the timeout period of Monkey to be 30 minutes. In the end, Monkey reports 5 apps ending up with app crash, 3 apps ending up with app restart, and 4 apps ending up with rebooting of device. As a result, among 74 apps, only 12 (around 16\%) apps end up with the abnormal behaviors. \zhilin{Update the statistics later} This shows that compared to the random testing, the repeated executions of witness cycles indeed dramatically increases the chances of the abnormal behaviors. From the results, it is reasonable to claim that there is a causal link between the task unboundedness/fragment-container unboundedness and the abnormal behaviors of Android apps. These suggest that task unbounded and fragment-container unbounded apps can be potentially harmful to
+the Android system, highlighting the importance of such an analysis.
+
+
+%\jinlong{Moreover, to highlight the relationship between abnormal behaviors and unbounded apps, we use Monkey\footnote{https://developer.android.com/studio/test/other-testing-tools/monkey} tool to randomly click in the above 74 apps from Table~\ref{tab:threat-fd-task}~--~\ref{tab:threatpop}. We set the click time as 1s in Monkey tool, which is the same as TaskDroid. The results are shown in Figure~\ref{fig:cmp-monkey}, in the same execution time, TaskDroid(resp. Monkey) reports 27(resp. 5) apps ending up with app crash, 10(resp. 3) apps ending up with app restart and 37(resp. 4) apps ending up with rebooting of device, only $16\%$ apps end up with abnormal behaviors when using Monkey tool.
+%These suggest that task unbounded and fragment-container unbounded apps can be potentially harmful to
+%the Android system, highlighting the importance of such an analysis.  }
 \begin{figure}[htbp]
 	\centering
 	\centering
