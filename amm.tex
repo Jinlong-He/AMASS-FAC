@@ -33,7 +33,7 @@ Android supports inter-component communication via \emph{intents}. An intent is 
 Android provides two types of intents, \emph{explicit} intents and \emph{implicit} intents. 
 Explicit intents specify directly which activity to activate. Implicit intents, on the other hand, do not directly specify the activities which should be called, it only specifies actions to be performed. 
 %A Uri can be used with the implicit intent to specify the data type.
-For example, an implicit intent with the action ``ACTION\_VIEW'' and the data of a URI ``http://www.google.com'' will cause a web browser to open a webpage. 
+For example, an implicit intent with the action ``ACTION\_VIEW'' and the data of \revision{a} URI ``http://www.google.com'' will cause a web browser to open a webpage. 
 Android system searches for all activities which are registered for the specific action and the data type. If many activities are found then the user can select which activities to use.
 In this paper, we restrict our attention to explicit intents since our focus is to understand the evolvement of the back stack when activities are started, and we do not attack the (another challenging) problem of resolving which activity should be started by implicit intents. 
 
@@ -275,7 +275,7 @@ It turns out that there are subtle differences between the multitasking mechanis
 %%%% In this section, we use two examples to motivate this paper. 
 %%%% In this section, we use two examples to motivate this paper. 
 %%%% In this section, we use two examples to motivate this paper. 
-\section{Motivating examples}\label{sec-motiv-exmp}
+\revision{\section{Motivating examples}\label{sec-motiv-exmp}}
 %
 We use two simple apps from F-Droid, namely, ``LaunchTime Homescreen''\footnote{available at https://github.com/quaap/LaunchTime/blob/master/} and ``ShoppingList''\footnote{available at https://github.com/GroundApps/ShoppingList/blob/master/}, to motivate this paper. We use the two examples to demonstrate that a model of the Android multitasking mechanism where the various factors related to activities, including launch modes, task affinities, intent flags, the finish() procedure, and the fragments, are taken into account, enables a more accurate static analysis of Android apps.  
 %

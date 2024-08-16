@@ -1,7 +1,7 @@
 %!TEX root = main.tex
 
 In this section,  we implement the static analysis algorithms proposed in the previous section, giving rise to %develop 
-a tool {\tool}\footnote{available at https://github.com/Jinlong-He/TaskDroid}. Moreover, we evaluate the performance of {\tool} via extensive experiments 
+a tool \revision{{\tool}\footnote{available at https://github.com/Jinlong-He/TaskDroid}}. Moreover, we evaluate the performance of {\tool} via extensive experiments 
 on 8,887 open-source and commercial Android apps.  
 
 \subsection{Implementation}\label{sec:impl}
@@ -140,7 +140,7 @@ dynamic {\sf AMASSExtractor} can extract the {\sf AMASS} models for F-Droid apps
 To detect %apps exhibiting the 
 task/fragment container unboundedness vulnerabilities, the timeout is set to 30 seconds, the height $\hbar$ of tasks is set to 6 and $k$ (i.e., the number of interplaying tasks, cf.\ Section~\ref{sec:static}) is set to 2.
 
-We first consider Android 13.0. The results of task unboundedness (resp.\ fragment container unboundedness) 
+We first consider \revision{Android 13.0}. The results of task unboundedness (resp.\ fragment container unboundedness) 
 are presented in Table~\ref{tab:taskbound}--\ref{tab:frgbound}. 
 %Column \# Unbounded apps shows the number of detected apps which suffer from task unboundedness (resp. fragment stack unboundedness). Column \# Faulty cycles per app shows the number of witness cycles of each task unbounded (resp. fragment stack unbounded) app. Column Time shows the average time to perform the analysis. 
 As one may see, {\tool} is highly efficient %fast 
@@ -180,7 +180,7 @@ Finally, the number of witness cycles discovered for the unbounded models is aro
 \end{center}   
 \end{table}
 
-We then consider Android 6.0--12.0 and compare the results for these versions with those for Android 13.0. As shown in Figure~\ref{fig:cmp-and}, the numbers of task unbounded F-Droid (resp.\ Google Play) apps are slightly different for different versions, while the numbers of fragment container unbounded F-Droid (resp.\ Google Play) apps are the same for different versions. This phenomenon is explained by that the semantics of $\AOAMASS$ is slightly different across Android versions, while the semantics of $\FOAMASS$ is the same for all these versions. To have a closer look, we can see that the numbers of task unbounded F-Droid (resp.\ Google Play) apps for Android 7.0, Android 8.0--10.0, and Android 11.0--13.0 are close to each other, and are slightly away from that of Android 6.0. This is explained by that Android 6.0 uses a different task allocation mechanism from the others. 
+We then consider Android 6.0--12.0 and compare the results for these versions with those for \revision{Android 13.0}. As shown in Figure~\ref{fig:cmp-and}, the numbers of task unbounded F-Droid (resp.\ Google Play) apps are slightly different for different versions, while the numbers of fragment container unbounded F-Droid (resp.\ Google Play) apps are the same for different versions. This phenomenon is explained by that the semantics of $\AOAMASS$ is slightly different across Android versions, while the semantics of $\FOAMASS$ is the same for all these versions. To have a closer look, we can see that the numbers of task unbounded F-Droid (resp.\ Google Play) apps for Android 7.0, Android 8.0--10.0, and \revision{Android 11.0--13.0} are close to each other, and are slightly away from that of Android 6.0. This is explained by that Android 6.0 uses a different task allocation mechanism from the others. 
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -218,7 +218,7 @@ This is primarily due to the fact that over 91\% of the models (739 out of 812) 
 		\centering
 		\includegraphics[width=3.2in]{cmp-and-frag.pdf}
 	\end{minipage}
-	\caption{Comparison of the results for different Android versions}
+	\caption{\revision{Comparison of the results for different Android versions}}
 	\label{fig:cmp-and}
 \end{figure}
 
@@ -376,7 +376,7 @@ The information of these apps can be found in  Appendix~\ref{app:table}, Table~\
 %\end{center}   
 %\end{table*}
 
-We manually check on a virtual machine (4-core CPU, 2G RAM with Android 13.0) whether these 100 apps are indeed task/fragment-container unbounded by verifying whether the witness cycles reported by {\tool} are executable. To ensure the reliability of the manual checking, we apply the cross verification method and ask 4 individuals to fulfill the manual checking and each of them checks all the 100 apps. 
+We manually check on a virtual machine (4-core CPU, 2G RAM with \revision{Android 13.0}) whether these 100 apps are indeed task/fragment-container unbounded by verifying whether the witness cycles reported by {\tool} are executable. \revision{To ensure the reliability of the manual checking, we apply the cross verification method and ask 4 individuals to fulfill the manual checking and each of them checks all the 100 apps. }
 The results are summarized in Table~\ref{tab:man-taskbound}.
 
 %We use cross-verification method involving 4 individuals to check manually
@@ -599,8 +599,8 @@ we select 9 apps from GooglePlay with more than 100,000 downloads, including wel
 	\end{center}   
 \end{table}
 
-Finally, considering the fact that the crashes and reboots of mobile applications can be caused by a variety of reasons, and it is common for mobile apps to experience such issues, in order to demonstrate a causal link between the crashes and task unboundedness and fragment-container unboundedness, we use the Monkey tool\footnote{https://developer.android.com/studio/test/other-testing-tools/monkey} to stress-test the 74 apps in Table~\ref{tab:threat-fd-task}~--~\ref{tab:threatpop}. We set the timeout period of Monkey to be 30 minutes. In the end, Monkey reports 6 apps ending up with app crash, 4 apps ending up with app restart, and 4 apps ending up with rebooting of device. As a result, among 74 apps, only 14 (around 19\%) apps end up with the abnormal behaviors. This shows that compared to the random testing, the repeated executions of witness cycles indeed dramatically increase the chances of the abnormal behaviors. From the results, it is reasonable to claim that there is a causal link between the task unboundedness/fragment-container unboundedness and the abnormal behaviors of Android apps. These suggest that task unbounded and fragment-container unbounded apps can be potentially harmful to
-the Android system, highlighting the importance of such an analysis.
+\revision{Finally, considering the fact that the crashes and reboots of mobile applications can be caused by a variety of reasons, and it is common for mobile apps to experience such issues, in order to demonstrate a causal link between the crashes and task unboundedness and fragment-container unboundedness, we use the Monkey tool\footnote{https://developer.android.com/studio/test/other-testing-tools/monkey} to stress-test the 74 apps in Table~\ref{tab:threat-fd-task}~--~\ref{tab:threatpop}. We set the timeout period of Monkey to be 30 minutes. In the end, as shown in Figure~\ref{fig:cmp-monkey}, Monkey reports 6 apps ending up with app crash, 4 apps ending up with app restart, and 4 apps ending up with rebooting of device. As a result, among 74 apps, only 14 (around 19\%) apps end up with the abnormal behaviors. This shows that compared to the random testing, the repeated executions of witness cycles indeed dramatically increase the chances of the abnormal behaviors. From the results, it is reasonable to claim that there is a causal link between the task unboundedness/fragment-container unboundedness and the abnormal behaviors of Android apps. These suggest that task unbounded and fragment-container unbounded apps can be potentially harmful to
+the Android system, highlighting the importance of such an analysis.}
 
 
 %\jinlong{Moreover, to highlight the relationship between abnormal behaviors and unbounded apps, we use Monkey\footnote{https://developer.android.com/studio/test/other-testing-tools/monkey} tool to randomly click in the above 74 apps from Table~\ref{tab:threat-fd-task}~--~\ref{tab:threatpop}. We set the click time as 1s in Monkey tool, which is the same as TaskDroid. The results are shown in Figure~\ref{fig:cmp-monkey}, in the same execution time, TaskDroid(resp. Monkey) reports 27(resp. 5) apps ending up with app crash, 10(resp. 3) apps ending up with app restart and 37(resp. 4) apps ending up with rebooting of device, only $16\%$ apps end up with abnormal behaviors when using Monkey tool.
@@ -610,7 +610,7 @@ the Android system, highlighting the importance of such an analysis.
 	\centering
 	\centering
 	\includegraphics[width=8cm]{cmp-monkey.pdf}
-	\caption{Number of abnormal behaviors of unbounded apps by TaskDroid and Monkey}
+	\caption{\revision{Number of abnormal behaviors of unbounded apps by TaskDroid and Monkey}}
 	\label{fig:cmp-monkey}
 \end{figure}
 
@@ -679,7 +679,7 @@ commercial apps.
 \end{figure}
 
 
-To compare the impact of different extractors on TaskDroid, for each app, we run {\sf AMASSAnalyzer} on the three models constructed by the three extractors for the app. We summarize the results in Figure~\ref{fig:cmp-extractor-ubd}. From Figure~\ref{fig:cmp-extractor-ubd}, we can see that the number of task unbounded apps is the greatest when ICCBot$_{\AMASS}$ is used. This is due to the fact that ICCBot$_{\AMASS}$ extracts more models than the other two extractors since it utilizes the dynamic approach to extract the models from the commercial apps that cannot be decompiled. In Table~\ref{tab:threatpop}, by repeatedly executing the witness cycles, we confirm that among these apps whose models are constructed dynamically by ICCBot$_{\AMASS}$, 9 apps are indeed task unbounded. Note that ICCBot and ActExtractor are unable to construct models from these apps since their APK files cannot be decompiled successfully by Soot. 
+To compare the impact of different extractors on TaskDroid, for each app, we run {\sf AMASSAnalyzer} on the three models constructed by the three extractors for the app. We summarize the results in Figure~\ref{fig:cmp-extractor-ubd}. From Figure~\ref{fig:cmp-extractor-ubd}, we can see that the number of task unbounded apps is the greatest when ICCBot$_{\AMASS}$ is used. \revision{This is due to the fact that ICCBot$_{\AMASS}$ extracts more models than the other two extractors since it utilizes the dynamic approach to extract the models from the commercial apps that cannot be decompiled. In Table~\ref{tab:threatpop}, by repeatedly executing the witness cycles, we confirm that among these apps whose models are constructed dynamically by ICCBot$_{\AMASS}$, 9 apps are indeed task unbounded. Note that ICCBot and ActExtractor are unable to construct models from these apps since their APK files cannot be decompiled successfully by Soot. }
 On the other hand, TaskDroid reports the same number of fragment container unbounded apps for ICCBot$_{\AMASS}$ and ICCBot. This is due to the fact that although ICCBot$_{\AMASS}$ extracts more information about fragments than ICCBot, e.g., the API addToBackstack(TS), these information has no impact on our static analysis algorithm for the fragment container unboundedness problem (see Section~\ref{sec:static}). Moreover, no fragment unboundedness is reported for the models extracted by ActExtractor, since it only extracts the information for activities. 
 %\jinlong{In conclusion, compared with \cite{HCWWY19}, TaskDroid detects more task unbounded apps and analyzes fragment container unbounded problem which \cite{HCWWY19} does not consider.}
 
