@@ -1,16 +1,9 @@
 \documentclass[acmsmall,manuscript,screen,review]{acmart}
 
-%%
-%% \BibTeX command to typeset BibTeX logo in the docs
 \AtBeginDocument{%
   \providecommand\BibTeX{{%
     Bib\TeX}}}
 
-%% Rights management information.  This information is sent to you
-%% when you complete the rights form.  These commands have SAMPLE
-%% values in them; it is your responsibility as an author to replace
-%% the commands and values with those provided to you when you
-%% complete the rights form.
 \setcopyright{acmcopyright}
 \copyrightyear{2022}
 \acmYear{2022}
@@ -149,22 +142,11 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%
-%% end of the preamble, start of the body of the document source.
+ 
 \begin{document}
 
-
-%%
-%% The "title" command has an optional parameter,
-%% allowing the author to define a "short title" to be used in page headers.
+ 
 \title{Formalization of Android Activity-Fragment Multitasking Mechanism and Static Analysis of Mobile Apps}
-
-%%
-%% The "author" command and its associated commands are used to define
-%% the authors and their affiliations.
-%% Of note is the shared affiliation of the first two authors, and the
-%% "authornote" and "authornotemark" commands
-%% used to denote shared contribution to the research.
 
 \author{Jinlong He}
 \affiliation{%
@@ -206,25 +188,9 @@
 %% of authors' names for this purpose.
 \renewcommand{\shortauthors}{He et al.}
 
-%%
-%% The abstract is a short summary of the work to be presented in the
-%% article.
+ 
 \begin{abstract}
-The multitasking mechanism between activities and fragments plays a fundamental role in the Android operating system, which involves a wide range of
-features, including launch modes, intent flags, task affinities, and structured activities containing fragments. All of them
-are being widely used in Android apps, both open-source and commercial ones. In this paper, we present a formal
-semantics of the Android multitasking mechanism  between activities and fragments, which accommodates all the important features and gives insofar
-the most comprehensive and accurate formalization. In particular,
-our semantics is formulated based on multi-stack systems, and
-fully captures the behavior of task stacks and activity stacks
-regarding fragments. Based on the semantics, we provide
-new static analysis algorithms, which are both multi-stack-aware and 
-fragment-sensitive, thus achieve more precise static analysis for Android apps.
-We validate our approach by extensive experiments on both
-open-source and commercial Android apps. The results highlight
-the benefits of the considering the semantics of the
-multitasking mechanism between activities and fragments in static analysis, and
-confirm the efficacy of our approach.
+The multitasking mechanism between activities and fragments plays a fundamental role in the Android operating system, which involves a wide range of features, including launch modes, intent flags, task affinities, and structured activities containing fragments. All of them are being widely used in Android apps, both open-source and commercial ones. In this paper, we present a formal semantics of the Android multitasking mechanism  between activities and fragments, which accommodates all the important features and gives insofar the most comprehensive and accurate formalization. In particular, our semantics is formulated based on multi-stack systems, and fully captures the behavior of task stacks and activity stacks regarding fragments. Based on the semantics, we provide new static analysis algorithms, which are both multi-stack-aware and fragment-sensitive, thus achieve more precise static analysis for Android apps. We validate our approach by extensive experiments on both open-source and commercial Android apps. The results highlight the benefits of the considering the semantics of the multitasking mechanism between activities and fragments in static analysis, and confirm the efficacy of our approach.
 \end{abstract}
 
 %%
@@ -248,28 +214,20 @@ confirm the efficacy of our approach.
 
 \ccsdesc[500]{Theory of computation~Operational semantics}
 \ccsdesc[500]{Software and its engineering~Formal software verification}
-
-%%
-%% Keywords. The author(s) should pick words that accurately describe
-%% the work being presented. Separate the keywords with commas.
+ 
 \keywords{Android multitasking mechanism, activities and fragments, formal semantics, stack unboundedness, static analysis}
 
 \received{20 February 2007}
 \received[revised]{12 March 2009}
 \received[accepted]{5 June 2009}
-
-%%
-%% This command processes the author and affiliation and title
-%% information and builds the first part of the formatted document.
+ 
 \maketitle
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Introduction}\label{sec:introduction}
 \input{intro.tex}
-
-%\section{Related Work} \label{sec:related}
-%\input{related.tex}
+ 
 
 \section{Android Multitasking Mechanism Between Activities and Fragments} \label{sec:amm}
 \input{amm.tex}
@@ -309,8 +267,7 @@ the understanding the security aspect of Android UI design.
 %From our formal semantics of the Android multitasking mechanism, app developers can gain a clear understanding of how task affinities, launch modes, intent flags, and fragment transactions influence the behaviors of the back stack,facilitating better app development. This is particularly valuable as the official documentation is complex and challenging to comprehend. Furthermore, researchers can also utilize the AMASS model to propose more advanced static analysis algorithms for complex security issues related to the Android multitasking mechanism.
 
 For the future work, more problems in static analysis %are worth studying which 
-can %significantly 
-benefit from the formalized multi-tasking semantics. 
+can benefit from the formalized multi-tasking semantics. 
 Moreover, we believe that {\AMASS} is a fundamental model in Android UI research which deserves a thorough theoretical investigation.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \bibliographystyle{alpha}
@@ -324,5 +281,4 @@ Moreover, we believe that {\AMASS} is a fundamental model in Android UI research
 
 \end{document}
 \endinput
-%%
-%% End of file `sample-acmsmall-submission.tex'.
+ 
