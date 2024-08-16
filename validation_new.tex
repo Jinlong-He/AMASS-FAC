@@ -477,8 +477,10 @@ To validate the semantics of $\AOAMASS$ empirically, we select 10 apps from F-Dr
 % \jinlong{the main reason is that the intent flags may interfere with each other. For example, $\ctpflag$ will be ignored when $\ctkflag$ is set, hence real world apps may not use $\ctkflag$ and $\ctpflag$ together. However, we need to validate all possible combinations of intent flags to ensure the correctness of the semantics of $\AOAMASS$, even though most combinations are not used in the real world apps.}
 Therefore, in addition to these apps, we design a special Android app, called ``ValApp'', aiming at covering all the cases in the definition of the semantics of $\AOAMASS$ and $\FOAMASS$ models. 
 
+The reason that we only select 10 apps from F-Droid plus ValApp to validate the semantics of $\AOAMASS$ (resp. $\FOAMASS$), instead of validate the semantics by experimenting on a large pool of existing apps, lies in the fact that although we shall propose an automated method for semantics validation in Section~\ref{sec-aut-val}, it is hard to apply the automated method to a large number of existing apps,  since generating sequences of click events for transitions is still a manual process. As a result, we mainly rely on ValApp to fulfill the semantics validation. We would like to argue that using ValApp to fulfill the semantics validation does not affect very much the soundness since after the options e.g. launch modes and intent flags are chosen, the rest of the validation process is the same as real-world Android apps, that is, the startActivity() procedure is executed in the Android OS and the results are collected and compared. 
+
 A snapshot of the ValApp is shown in Figure~\ref{fig:valapp}. 
-ValApp includes 8 activities, corresponding to the $8$ (launch mode, task affinity) pairs from $\{\STD, \STP, \STK, \SIT\} \times \{1,2\}$. Moreover, ValApp provides means to choose the launch modes and intent flags, as well as ``start'' and ``finishStart'', so that transition rules can be generated for all their combinations. 
+ValApp\footnote{available at https://github.com/Jinlong-He/ValApp/tree/main} includes 8 activities, corresponding to the $8$ (launch mode, task affinity) pairs from $\{\STD, \STP, \STK, \SIT\} \times \{1,2\}$. Moreover, ValApp provides means to choose the launch modes and intent flags, as well as ``start'' and ``finishStart'', so that transition rules can be generated for all their combinations. 
 Furthermore, each activity of ValApp includes two fragments and two fragment containers. It also provides two variables for fragment identifiers and allows arbitrary combinations of actions to form fragment transactions. Finally, ValApp allows pushing arbitrarily many transactions into the fragment transaction stack. 
 %
 From the design, we can see that ValApp is capable of comprehensively accounting for all factors that may affect the semantics of $\AOAMASS$ and $\FOAMASS$ models. Moreover, we ValApp is \emph{universal} in the sense that a user can interact with ValApp to choose the transition rules and generate a desired {\AMASS} model. 
@@ -589,6 +591,9 @@ The automated method to validate the semantics goes as follows. For a transition
 $\tau(\rho)$ denotes the expected configuration obtained by applying $\tau$ on $\rho$ according to the formal semantics. 
 %If $\tau(\rho) \neq \rho'$, then report that the formal semantics of {\AMASS} models and the actual semantics of Android multitasking mechanism are different.
 \end{enumerate}
+Note that the semantics validation method is automated in the sense that it can automatically execute the sequences of click events and compare the resulting configurations, but the sequences of click events should still be \emph{manually} generated. This partially explains why we choose only 20 real-world apps to validate the semantics and mainly relies on ValApp to fulfill the validation. 
+
+%Note that in the aforementioned automated semantics validation method, the generation of sequences of click events in the app $X$ is manually done. As a result, 
 
 %\revision{
 \subsubsection{Validation of the formal semantics of $\AOAMASS$}
