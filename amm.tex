@@ -33,7 +33,7 @@ Android supports inter-component communication via \emph{intents}. An intent is 
 Android provides two types of intents, \emph{explicit} intents and \emph{implicit} intents. 
 Explicit intents specify directly which activity to activate. Implicit intents, on the other hand, do not directly specify the activities which should be called, it only specifies actions to be performed. 
 %A Uri can be used with the implicit intent to specify the data type.
-For example, an implicit intent with the action ``ACTION\_VIEW'' and the data of \revision{the} URI ``http://www.google.com'' will cause a web browser to open a webpage. 
+For example, an implicit intent with the action ``ACTION\_VIEW'' and the data of the URI ``http://www.google.com'' will cause a web browser to open a webpage. 
 Android system searches for all activities which are registered for the specific action and the data type. If many activities are found then the user can select which activities to use.
 In this paper, we restrict our attention to explicit intents since our focus is to understand the evolvement of the back stack when activities are started, and we do not attack the (another challenging) problem of resolving which activity should be started by implicit intents. 
 
@@ -275,11 +275,11 @@ It turns out that there are subtle differences between the multitasking mechanis
 %%%% In this section, we use two examples to motivate this paper. 
 %%%% In this section, we use two examples to motivate this paper. 
 %%%% In this section, we use two examples to motivate this paper. 
-\revision{\section{Motivating examples}\label{sec-motiv-exmp}}
+\section{Motivating examples}\label{sec-motiv-exmp}
 %
 We use two simple apps from F-Droid, namely, ``LaunchTime Homescreen''\footnote{available at https://github.com/quaap/LaunchTime/blob/master/} and ``ShoppingList''\footnote{available at https://github.com/GroundApps/ShoppingList/blob/master/}, to motivate this paper. We use the two examples to demonstrate that a model of the Android multitasking mechanism where the various factors related to activities, including launch modes, task affinities, intent flags, the finish() procedure, and the fragments, are taken into account, enables a more accurate static analysis of Android apps.  
 %
-\subsection{The ``LaunchTime Homescreen'' app}
+\revision{\subsection{The ``LaunchTime Homescreen'' app: task unboundedness}}
 The ``LaunchTime Homescreen'' app contains ten activities. Let us focus on MainActivity and SettingsActivity. The snippet of the source code of the two activities in the ``LaunchTime Homescreen'' app is shown in Figure~\ref{code-launchtime}. The launch modes of MainActivity and SettingsActivity are singleInstance and standard respectively. 
 In line 3942 of the MainActivity.java file (see Figure~\ref{code-launchtime}), MainActivity starts SettingsActivity by calling the function startActivity(settingsIntent), where the settingsIntent contains the intent flag FLAG\_ACTIVITY\_NEW\_TASK. 
 On the other hand, in line 142 of the SettingsActivity.java file (see Figure~\ref{code-launchtime}), SettingsActivity starts MainActivity by calling the function startActivity(main), where all the intent flags are set to be false. Moreover, in line 144 of the same file, finish() is called after MainActivity is started. That is, when MainActivity is started, SettingsActivity is finished. 
@@ -387,7 +387,7 @@ Therefore, we can see that ATG and the model of \cite{LHR17} will report the tas
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %
-\subsection{The ``ShoppingList'' app}
+\revision{\subsection{The ``ShoppingList'' app: fragment-container unboundedness}}
 If a model of Android multitasking mechanism does not capture the fragments, then the fragment-container unboundedness problem will be missed in the static analysis of Android apps. 
 Furthermore, if the fragments are captured, but in an imprecise way, then the static analysis may still be inaccurate. Let us use the ``ShoppingList'' app to illustrate this point. 
 The ``ShoppingList'' app comprises two activities, MainActivity and SettingsActivity. The MainActivity contains five Fragments. Let us focus on three of them, namely, ErrorFragment, ShoppingListFragment and CacheListFragment. From the snippet of the source code in Figure~\ref{code-shoplist}, ErrorFragment can start ShoppingListFragment and CacheListFragment via replace() function (see line 69 and 75 of the ErrorFragment.java file). On the other hand, ShoppingListFragment can start ErrorFragment via replace() function (see line 392 of the ShoppingListFragment file). 
