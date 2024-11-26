@@ -605,9 +605,39 @@ Finally, considering that the crashes and reboots of mobile applications can be 
 As shown in Figure~\ref{fig:cmp-monkey}, Monkey reports 6 apps ending up with app crash, 4 apps ending up with app restart, and 4 apps ending up with rebooting of device. 
 %
 Namely, 14 out of 74 apps (around 19\%) apps end up with abnormal behaviors which shows that, compared to the random testing, the repeated executions of witness cycles indeed dramatically increase the chances of exposing abnormal behaviors. 
-\revision{Furthermore, we use ``adb logcat'' command to record the log of the app when executing the witness cycles repeatedly, it shows that all the apps which ending up with app restart and rebooting of the device throw the ``android.os.DeadObjectException'' exeption, and all the apps which ending up with app crash report the ``createSurface error Out of memory'' error. The ``android.os.DeadObjectException'' exeption is mainly caused by killing the process due to the lacks of the resources such that memory, CPU, e.g., we use ``adb shell top'' command to monitor the usage of memory of the apps, it shows that the usage of memory is increasing when executing the witness cycles repeatedly.
+
+\revision{Furthermore, we use ``adb logcat'' command to record the log of the app when executing the witness cycles repeatedly, it shows that 
+all the apps which ending up with app crash report the ``SurfaceFlinger: AddClientLayer failed, mNumLayers (4096) >= MAX\_LAYERS (4096)'' error,
+and all the apps which ending up with app restart and rebooting of the device throw the ``android.os.DeadObjectException'' exeption.
+\begin{itemize}
+	\item The error ``SurfaceFlinger: AddClientLayer failed, mNumLayers (4096) >= MAX\_LAYERS (4096)'' is mainly caused by the number of existing layers has already reached the maximum system limit of 4096, which the layers is an abstract representation of different view contents (such as Button, TextView, etc.).
+	\item The exeption ``android.os.DeadObjectException'' is mainly caused by the process being killed or rebooting of device. When memory resources are insufficient, the Android system employs memory management strategies to terminate certain processes to maintain system stability. If memory shortages cause crucial system processes (such as the system launcher, system services, etc.) to be unresponsive for an extended period, this could indirectly affect system stability. In such cases, the Android system may reboot the device to restore normal operation.
+\end{itemize}
+We use ``adb shell dumpsys meminfo'' to monitor the memory usage when executing the witness cycles repeatedly and record the memory usage increment for each cycle, the results are shown in Table~\ref{tab:bound-mem}. It shows that the average memory increment per cycle for app restart or reboot is comparable, while the average memory increment per cycle for app crashe is much smaller than the other two, moreover, the average memory increment per cycle for fragment container unboundedness is smaller than task unboundedness.
+Since the memory increment per cycle for apps crash is small, when executing the witness cycle repeatedly, the number of existing layers will rech the maximum system limit before causing the memory management strategies. This also explains why fragment unboundedness requires more iterations of the witness cycles to execute, as the memory usage increment per cycle is lower compared to task unboundedness.
 As a result, we believe there is a causal relation between the task unboundedness/fragment-container unboundedness and the abnormal behaviors of Android apps, and the root cause is that the usage of memory will increase when creating the new activity instance or fragment instance.} It suggests that task-unbounded/fragment-container unbounded apps can be potentially harmful to
 the Android system, highlighting the importance of such an analysis.
+
+\begin{table}[htbp]   
+	\begin{center}   
+		\begin{tabular}{|c|c|c|}   
+			\hline   \textbf{unbound. vulnerability} &\textbf{Abnormal behavior} & \textbf{Avg. size per cycle}   \\   
+			\hline
+			\hline \multirow{3}{*}{task} & app crash & 1.2M \\
+			\cline{2-3} & app restart & 10.6M\\
+			\cline{2-3} & reboot & 12.7M\\
+			\hline \multirow{3}{*}{fragment container} & app crash & 0.6M \\
+			\cline{2-3} & app restart & 3.4M\\
+			\cline{2-3} & reboot & 3.9M\\
+			\hline
+		\end{tabular}   
+		\caption{\revision{Memory usage per cycle between different abnormal behaviors}\label{tab:bound-mem}}
+	\end{center}   
+\end{table}
+
+% de.bloosberg.basti.childresuscalc 256 39180 302 40456 -> 46 1276 4
+% systems.byteswap.aiproute 140 37657 202 41082 -> 62 3425 3
+% org.gnucash.android 277 44388 48411 -> 
 
 
 %\jinlong{Moreover, to highlight the relationship between abnormal behaviors and unbounded apps, we use Monkey\footnote{https://developer.android.com/studio/test/other-testing-tools/monkey} tool to randomly click in the above 74 apps from Table~\ref{tab:threat-fd-task}~--~\ref{tab:threatpop}. We set the click time as 1s in Monkey tool, which is the same as TaskDroid. The results are shown in Figure~\ref{fig:cmp-monkey}, in the same execution time, TaskDroid(resp. Monkey) reports 27(resp. 5) apps ending up with app crash, 10(resp. 3) apps ending up with app restart and 37(resp. 4) apps ending up with rebooting of device, only $16\%$ apps end up with abnormal behaviors when using Monkey tool.
