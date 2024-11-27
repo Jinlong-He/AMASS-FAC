@@ -518,23 +518,19 @@ For a transition rule of the form $\tau = A\xrightarrow{\alpha(\phi)} B$, we can
 %Hence, we need to audit the source code of the app to check which sequence is corresponding to the transition rule $\tau$. }
 %Therefore, the semantics validation method is automated in the sense that it can automatically execute the sequences of click events and compare the resulting configurations, but the sequences of click events should still be \emph{manually} generated. 
 
-\revision{Since generating sequences of click events for transitions is a manual process, it is hard to apply the aforementioned partially automated method for semantics validation to a large pool of Android apps from F-Droid or GooglePlay. As a result, in the sequel, we only select a small number of (more precisely, 20) apps from F-Droid to validate the formal semantics.
+\revision{Since generating sequences of click events for transitions is a manual process, it is hard to apply the aforementioned partially automated method for semantics validation to a large pool of Android apps from F-Droid or Google Play. As a result, in the sequel, we only select a small number of (more precisely, 20) apps from F-Droid to validate the formal semantics.
 \begin{itemize}
 \item At first, we select 10 apps to cover as many launch modes and intent flags as possible for validating the semantics of $\AOAMASS$. 
 %
 \item Then, we select 10 apps to cover as many types of fragment transactions as possible for validating the semantics of $\FOAMASS$.
 \end{itemize}
-We generate the sequences of click events from the transition rules by manually inspecting the source codes of these 20 apps.}
-%, which also partially explains why we do not choose the commercial apps from GooglePlay to validate the formal semantics, since their source codes are unavailable.}  
-
-Nevertheless, these 20 apps still do not cover the vast number of cases in the definition of the semantics of $\AOAMASS$ and $\FOAMASS$, since there are exponentially many different combinations of intent flags. Therefore, in addition to these apps, we design a special Android app ValApp\footnote{available at https://github.com/Jinlong-He/ValApp/tree/main}, aiming at covering all the cases in the definition of the semantics of $\AOAMASS$ and $\FOAMASS$ models. 
-
-As a result, we mainly rely on ValApp to enumerate the different combinations of intent flags and carry out semantics validation for them.  
+We generate the sequences of click events from the transition rules by manually inspecting the source codes of these 20 apps.
+Evidently, these 20 apps are insufficient to cover the vast number of cases in the definition of the semantics of $\AOAMASS$ and $\FOAMASS$, since there are exponentially many different combinations of intent flags. Therefore, in addition to these apps, we design a special Android app ValApp\footnote{available at https://github.com/Jinlong-He/ValApp/tree/main}, aiming at covering all the cases in the definition of the semantics of $\AOAMASS$ and $\FOAMASS$ models. We mainly rely on ValApp to enumerate the different combinations of intent flags and carry out semantics validation for them.  
 %
 Note that this way %using ValApp to fulfill the semantics validation 
 %does not affect very much the soundness 
-is largely credible since, after the options (e.g. launch modes and intent flags) are chosen, the rest of the validation process is the same as real-world Android apps, that is, the startActivity() procedure is executed in the Android OS and the results are collected and compared. 
-
+is largely credible since, after the options (e.g. launch modes and intent flags) are chosen, the rest of the validation process is the same as real-world Android apps, that is, the startActivity() or commit() procedure is executed in the Android OS and the results are collected and compared. 
+}
 
 %This partially explains why we choose only 20 real-world apps to validate the semantics and mainly relies on ValApp to fulfill the validation. 
 
